@@ -1,5 +1,5 @@
 INSTRUCTIONS
-############
+-----------
 
 1. Run ./installnrds.sh <hostname of machine to be monitored> <monitoring interval> 
           e.g. # ./installnrds.sh passive_host_test2 3
@@ -17,26 +17,26 @@ INSTRUCTIONS
 8. Check the Web UI to confirm the host has been added.
 
 Contents
-########
+--------
 
 installnrds.sh 
-##############
+--------------
 1) Adds the nagios user and nagios group.
 2) Creates the directory structure.
 3) Sets permissions/ownership.
 4) Adds perl script to crontab.
 
 nrds.cfg
-########
+--------
 contains parameters that vary dependent on where the scripts are deployed or that may be useful in case some change is required.
 
 send_nrdp.sh
-############
+------------
 This script is the part of the nrdp client on the remove machine that is used to send the data to the NRDP server.
 This is invoked by the perl script when it is executed via cron.
 
 nrds
-####
+----
 This directory contains perl scripts:
 nrds.pl - Master script that obtains config information and then invokes send_nrdp.sh, run by cron.
 nrds_updater.pl - obtains plugins and config updates from the NRDP server (not yet in use by us)
