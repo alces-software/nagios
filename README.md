@@ -1,38 +1,38 @@
-INSTRUCTIONS
-------------
+Instructions
+-------------
 
 Install NRDS Clients on Machines to be Monitored
 ------------------------------------------------
 
 1. If not already installed, install wget:
 
-    # yum -y install wget
+    yum -y install wget
     
 2. Download NRDP Client Installation files:
 
-    # wget https://github.com/alces-software/nagios/archive/master.zip
+    wget https://github.com/alces-software/nagios/archive/master.zip
     
 3. Extract the tarball:
 
-    # unzip master.zip
+    unzip master.zip
     
 4. Install the nrds client:
 
 Run the following command:
 
-    # cd nagios-master
+    cd nagios-master
     
-    # ./installnrds <hostname> <interval>
+    ./installnrds <hostname> <interval>
     
 ----------------------------------------------------------------------------------------------------------------------
 Example: Install NRDS clients onto the LAPLACE cluster CONTROLLER, with checks that will be run at 3 minute intervals:
 ----------------------------------------------------------------------------------------------------------------------
-    # ./installnrds controller.pri.laplace 3 
+    ./installnrds controller.pri.laplace 3 
 ----------------------------------------------------------------------------------------------------------------------
     
 5. Install the Client side checks: (this will contain the check_ping command only for the moment).
 
-    # ./installchecks.sh
+    ./installchecks.sh
     
 Installation of the NRDP Client on the remote machine is now complete.
 
