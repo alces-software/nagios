@@ -76,7 +76,6 @@ then
     printf "Success! curl installed.\n"
 fi
 
-
 printf "Adding User and Group...\n"
 
 user=nagios

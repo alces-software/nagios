@@ -56,7 +56,6 @@ else
     printf "Success! directory: ${plugindir} now has an owner of user: ${user} and group: ${group}\n"
 fi
 
-
 # Copy checks in to the checks directory
 
 cp check_* ${plugindir}
@@ -67,4 +66,15 @@ then
     exit ${rc}
 else
     printf "Success! Checks copied in to plugin directory ${plugindir}...\n"
+fi
+
+# Set permissions on checks - Nagios user needs to read and execute only
+chmod 550 ${plugindir} 
+rc=$?
+if [ ${rc} -ne 0 ];
+then
+    printf "Error ! Unable to set permissions on the check scripts"
+    exit ${rc}
+else
+    printf "Success! Permissions set on the check files."
 fi
