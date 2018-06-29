@@ -1,20 +1,41 @@
 INSTRUCTIONS
------------
+------------
 
-1. Run ./installnrds.sh <hostname of machine to be monitored> <monitoring interval> 
-          e.g. # ./installnrds.sh passive_host_test2 3
-2. Run ./installchecks.sh
-3. On the server,
-          e.g. #  cd /usr/local/nagios/etc/objects/passive_check_hosts
-4. Copy the passive_host_test.cfg 
-	e.g. # cp passive_host_test.cfg passive_host_test2.cfg
-5. Rename the references to 'passive_host_test'  in this file to 'passive_host_test2'
-	e.g. # sed -i 's/passive_host_test/passive_host_test2/g' passive_host_test2.cfg
-6. Syntax check on nagios config file:
-	e.g. # /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
-7. restart nagios:
-	e.g. # systemctl restart nagios
-8. Check the Web UI to confirm the host has been added.
+Install NRDS Clients on Machines to be Monitored
+------------------------------------------------
+
+1. If not already installed, install wget:
+
+    # yum -y install wget
+    
+2. Download NRDP Client Installation files:
+
+    # wget https://github.com/alces-software/nagios/archive/master.zip
+    
+3. Extract the tarball:
+
+    # unzip master.zip
+    
+4. Install the nrds client:
+
+Run the following command:
+
+    # cd nagios-master
+    
+    # ./installnrds <hostname> <interval>
+    
+----------------------------------------------------------------------------------------------------------------------
+Example: Install NRDS clients onto the LAPLACE cluster CONTROLLER, with checks that will be run at 3 minute intervals:
+----------------------------------------------------------------------------------------------------------------------
+    # ./installnrds controller.pri.laplace 3 
+----------------------------------------------------------------------------------------------------------------------
+    
+5. Install the Client side checks: (this will contain the check_ping command only for the moment).
+
+    # ./installchecks.sh
+    
+Installation of the NRDP Client on the remote machine is now complete.
+
 
 Contents
 --------
@@ -23,21 +44,35 @@ installnrds.sh
 --------------
 1) Adds the nagios user and nagios group.
 2) Creates the directory structure.
-3) Sets permissions/ownership.
+3) Sets permissions/ownership on the directories and files.
 4) Adds perl script to crontab.
+
+installchecks.sh
+----------------
+Creates the directory structure for the checks and copies the default checks from their install package to their new directory.
+
+uninstallnrds.sh
+----------------
+Undoes everything done by installnrds.sh - restores the state of the system to as it was prior to running installnrds.sh
+(very helpful for testing enhancements to installnrds.sh)
+
+uninstallchecks.sh
+------------------
+Undoes everything doen by installchecks.sh - restores the state of the system to as it was prior to running installchecks.sh
+(very helpful for testing enhancements to installchecks.sh)
 
 nrds.cfg
 --------
-contains parameters that vary dependent on where the scripts are deployed or that may be useful in case some change is required.
+Used by nrdp.sh and nrds.pl and installnrds.sh.
+These scripts carry out their operations on parameterised data that is supplied by this file. For example, nrds.pl uses nrds.cfg to
+determine which checks to run. 
 
 send_nrdp.sh
 ------------
-This script is the part of the nrdp client on the remove machine that is used to send the data to the NRDP server.
-This is invoked by the perl script when it is executed via cron.
+Used to submit passive check data to the NRDS server.
 
 nrds
 ----
-This directory contains perl scripts:
-nrds.pl - Master script that obtains config information and then invokes send_nrdp.sh, run by cron.
+nrds.pl - Master script that obtains config information and then invokes send_nrdp.sh, run by cron. Run every 3 minutes by default
 nrds_updater.pl - obtains plugins and config updates from the NRDP server (not yet in use by us)
 nrds_common.pl - perl code that is used by both nrds.pl and nrds_updater.pl
