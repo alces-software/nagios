@@ -73,8 +73,8 @@ chmod 550 ${plugindir}
 rc=$?
 if [ ${rc} -ne 0 ];
 then
-    printf "Error ! Unable to set permissions on the check scripts"
+    printf "Error ! Unable to set permissions on the check scripts...\n"
     exit ${rc}
 else
-    printf "Success! Permissions set on the check files."
+    printf "Success! Permissions set on the check files...\n"
 fi
