@@ -1,0 +1,82 @@
+#!/bin/bash
+################################################################################
+# (c) Copyright 2007-2011 Alces Software Ltd                                   #
+#                                                                              #
+# HPC Cluster Toolkit                                                          #
+#                                                                              #
+# This file/package is part of the HPC Cluster Toolkit                         #
+#                                                                              #
+# This is free software: you can redistribute it and/or modify it under        #
+# the terms of the GNU Affero General Public License as published by the Free  #
+# Software Foundation, either version 3 of the License, or (at your option)    #
+# any later version.                                                           #
+#                                                                              #
+# This file is distributed in the hope that it will be useful, but WITHOUT     #
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        #
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License #
+# for more details.                                                            #
+#                                                                              #
+# You should have received a copy of the GNU Affero General Public License     #
+# along with this product.  If not, see <http://www.gnu.org/licenses/>.        #
+#                                                                              #
+# For more information on Alces Software, please visit:                        #
+# http://www.alces-software.org/                                               #
+#                                                                              #
+################################################################################
+
+# Script to check for PSU health
+# Pass the server IPMI interface IP address or name as the first parameter.
+# If no IPMI interface IP address is passed, then all nodes are checked.
+
+echo "starting PSU check"
+
+# set ecc-check spool directory
+checkdir=/home/ross/Desktop/Scripts/bash/nagios/testing/input
+
+echo "checking to see if output files are available"
+
+# Check that ECC output files are available
+[[ -d $checkdir ]] || exit 3
+
+# Check that we've been passed a parameter
+remote=$1
+if [ ! $remote ] ; then
+
+   # Check All PSUs
+   echo "Checking All PSUs"
+
+   fault=0
+   good=0
+
+   ok="'Presence detected'"
+
+   echo "Running check command"
+   
+   for file in `ls -1 $checkdir/*`
+   do
+      node_nr=`echo $file | grep -o "[0-9]*"`
+
+      # Remove leading zeros
+
+      node_nr=`echo $node_nr | sed 's/^0*//'`
+      # echo "checking node $node_nr"
+
+      if [[ $(($node_nr % 4)) != 1 ]] ; then
+	      continue
+      fi
+
+      if [ `egrep -i "psu (1|2) Status" $file | grep -cv "$ok\$"` -gt 0 ] ; then
+         fault=`expr $fault + 1`
+      else
+         good=`expr $good + 1`
+      fi
+   done
+
+   if [ $fault -gt 0 ] ; then
+	   echo "$fault PSU Fault(s) "
+      exit 1
+   else
+      echo "$good nodes report no PSU faults"
+      exit 0
+   fi
+fi
