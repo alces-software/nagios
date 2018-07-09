@@ -28,7 +28,7 @@
 # 2 PSUs per chassis. 4 Nodes per chassis. The first node in each chassis's view of PSU health is reported.
 
 # set ipmi-check spool directory
-checkdir=/home/ross/Desktop/Scripts/bash/nagios/testing/input
+checkdir=/var/spool/nagios/ipmi-check
 
 # Check that ipmi output files are available
 [[ -d $checkdir ]] || exit 3
