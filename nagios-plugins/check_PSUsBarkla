@@ -24,59 +24,82 @@
 #                                                                              #
 ################################################################################
 
-# Script to check for PSU health
-# Pass the server IPMI interface IP address or name as the first parameter.
-# If no IPMI interface IP address is passed, then all nodes are checked.
+# Script to check for PSU health.
+# 2 PSUs per chassis. 4 Nodes per chassis. The first node in each chassis's view of PSU health is reported.
 
-echo "starting PSU check"
-
-# set ecc-check spool directory
+# set ipmi-check spool directory
 checkdir=/home/ross/Desktop/Scripts/bash/nagios/testing/input
 
-echo "checking to see if output files are available"
-
-# Check that ECC output files are available
+# Check that ipmi output files are available
 [[ -d $checkdir ]] || exit 3
+
+# By default, node names are nodeXYZ, unless customers specify otherwise.
+node_name="node"
 
 # Check that we've been passed a parameter
 remote=$1
 if [ ! $remote ] ; then
 
-   # Check All PSUs
-   echo "Checking All PSUs"
+   psu_status_fault=0
+   psu_status_good=0
+   psu_redundancy_fault=0
+   psu_redundancy_good=0
+  
+   # Arrays to keep track of which node's PSUs need attention. 
+   declare -a unhealthy_psus
+   declare -a unhealth_redundancy_psus
 
-   fault=0
-   good=0
+   # The following string is what we are hoping to find for the PSU Status as reported from each node per chassis.
+   # Anything other than this indicates a problem with a PSU.
 
-   ok="'Presence detected'"
+   psu_status_ok="'Presence detected'"
 
-   echo "Running check command"
-   
-   for file in `ls -1 $checkdir/*`
+   # The following string is what we are hoping to find for PSU Redundancy as reported from each node per chasis.
+   # Anything other than this indicates a PSU Redundancy problem.
+
+   psu_redundancy_ok="'Fully Redundant'"
+
+
+   # Precondition: The first node in the list has an ID of node01.txt
+   # Postcondition: Fault is equal to the number of nodes checked that report a fault.
+   #                Good is equal to the number of nodes chcked that report OK
+
+   # Get listening of NODE files and iterate through each one 
+   for file in `ls -1 $checkdir/$node_name*`
    do
+
+      # Obtain number of the node from the file name	   
       node_nr=`echo $file | grep -o "[0-9]*"`
 
       # Remove leading zeros
-
       node_nr=`echo $node_nr | sed 's/^0*//'`
-      # echo "checking node $node_nr"
-
+      
+      # If NOT the 4th node in the list, skip this iteration.
       if [[ $(($node_nr % 4)) != 1 ]] ; then
 	      continue
       fi
 
-      if [ `egrep -i "psu (1|2) Status" $file | grep -cv "$ok\$"` -gt 0 ] ; then
-         fault=`expr $fault + 1`
+      if [ `egrep -i "psu (1|2) Status" $file | grep -cv "$psu_status_ok\$"` -gt 0 ] ; then
+         psu_status_fault=`expr $psu_status_fault + 1`
+	 unhealthy_psus=("${unhealthy_psus}""$node_name$node_nr ")
       else
-         good=`expr $good + 1`
+         psu_status_good=`expr $psu_status_good + 1`
+      fi
+
+      if [ `egrep -i "PSU Redundancy" $file | grep -cv "$psu_redundancy_ok\$"` -gt 0 ] ; then
+         psu_redundancy_fault=`expr $psu_redundancy_fault + 1`
+	 unhealthy_redundancy_psus=("${unhealthy_redundancy_psus}""$node_name$node_nr ")
+      else
+	 psu_redundancy_good=`expr $psu_redundancy_good + 1`
       fi
    done
 
-   if [ $fault -gt 0 ] ; then
-	   echo "$fault PSU Fault(s) "
+   # Report information back
+   if [ $psu_status_fault -gt 0 ] || [ $psu_redundancy_fault -gt 0 ] ; then
+      echo "$psu_status_fault PSU Status Fault(s)! Check node(s): ${unhealthy_psus[@]}. $psu_redundancy_fault PSU Redundancy Fault(s)! Check node(s): ${unhealthy_redundancy_psus[@]}"
       exit 1
    else
-      echo "$good nodes report no PSU faults"
+      echo "$psu_status_good node(s) report(s) no PSU faults and $psu_redundancy_good node(s) report(s) no PSU Redundancy problems."
       exit 0
    fi
 fi

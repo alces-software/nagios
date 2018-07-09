@@ -1,1 +1,0 @@
-Nagios checks will take fabricated/cloned data from files stored in test/input, and write to test/output a file that will store the outputs
