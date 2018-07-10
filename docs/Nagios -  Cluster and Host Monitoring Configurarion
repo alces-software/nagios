@@ -1,0 +1,530 @@
+Nagios - Cluster and Host Monitoring Configuration
+--------------------------------------------------
+
+Contents
+--------
+
+1. Add a Cluster to Monitoring.............................................................................................................
+1.1. Create a New Host Group Object Definition.............................................................................................
+1.2. Create a New Host Object Definition...................................................................................................
+1.3. Update Nagios Service Main Configuration..............................................................................................
+1.4. Install NRDS Clients on Machines to be Monitored......................................................................................
+2. 2. Adding a Host to Monitoring..........................................................................................................
+2.1 2. Adding a Host to Monitoring - Server Side Configuration.............................................................................
+2.2 2. Adding a Host to Monitoring - Client Side Configuration.............................................................................
+3. Adding Service Checks to Hosts..........................................................................................................
+3.1. Adding Service Checks to Hosts - Server Side Configuration............................................................................
+3.2. Adding Service Checks to Hosts - Client Side Configuration............................................................................
+4. Addiing Hardware Service Checks to Hosts................................................................................................
+5. Troubleshooting.........................................................................................................................
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Notes:
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+text enclosed in angular brackets, refers to parameters that are specific to the use case. e.g. Where <cluster> appears in the document, replace with a cluster name of interest, e.g.
+laplace or hamilton.
+
+Generally, configuration must be performed on client and server. Server configuration, is used by Nagios to process and display information it receives from clients correctly. Client configuration, species what checks to run and where to transfer the data.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+1. Add a Cluster to Monitoring
+------------------------------
+
+In this section, a New Host Group is created and assigned a Controller as it's initial host member. Initially, this host will not have any services checked. Instead only the state of the host (UP or DOWN), will be monitored.
+
+1.1. Create a New Host Group Object Definition
+----------------------------------------------
+
+Host Group objects are used to represent clusters in Nagios.
+
+1. Log in as root, to flightcenter-nagios2
+
+2. Create a directory to store the object definitions specific to a cluster.
+
+    # mkdir /usr/local/nagios/etc/objects/<cluster>
+
+3. Set the correct ownership:
+
+    # chown -R nagios:nagios /usr/local/nagios/etc/objects/<cluster>
+
+4. Create a new config file named <cluster>-hostgroup.cfg
+
+    # cd /usr/local/nagios/etc/objects/<cluster>
+    # vi <cluster>-hostgroup.cfg
+
+5. Paste the following hostgroup object definition into the file:
+
+
+define hostgroup{
+        hostgroup_name  <cluster> ; The name of the hostgroup/group
+        alias           <cluster> Hostgroup ; Long name of the group
+        members         controller  ; Each cluster has a controller member, so feel free to paste this in.
+}
+
+Save and close.
+
+1.2. Create a Host Object Definition for the Controller
+-------------------------------------------------------
+
+The controller will be the initial member of the host group.
+
+1. Create a directory to store the host object definitions:
+
+    # mkdir /usr/local/nagios/etc/objects/<cluster>/hosts
+    # cd /usr/local/nagios/etc/objects/<cluster>/hosts
+    
+2. Create a file named: controller.pri.<cluster>.cfg:
+
+    # vi controller.pri.<cluster>.cfg
+
+3. Paste the following host object definition into the file:
+
+define host {
+    use            passive_host
+    host_name      controller.pri.<cluster>
+}
+
+Save and close.
+
+1.3 Update Nagios Service Configuration
+---------------------------------------
+
+1. Open the main Nagios config file:
+
+    # vi /usr/local/nagios/etc/nagios.cfg
+
+2. Insert the following lines to the config file, beneath the text: # Alces Object Definitions
+
+cfg_dir=/usr/local/nagios/etc/objects/<cluster>
+cfg_dir=/usr/local/nagios/etc/objects/<cluster>/hosts
+
+3. Run a sanity check on the syntax and structure of the updated configuration:
+
+     # /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+The new object definitions should be found and no errors should be present. Correct any that arise before attempting to restart Nagios.
+
+5. Restart Nagios:
+
+    # systemctl restart nagios && tail -f /usr/local/nagios/var/nagios.login
+
+Note: && tail -f /usr/local/nagios/var/nagios.login is OPTIONAL and is useful to check the Nagios log file to verify processing.
+
+6. Check the web UI on https://flightcenter-nagios2/nagios and navigate to Host Groups in the menu pane to the left of the screen. You will notice, that there is now a new Host Group named <cluster> with a single host named controller. At this point data for this host will be pending as no checks will have been run on the controller.
+
+The next stage is to install the NRDP client on to the controller, so that passive checks will be performed and sent to the NRDP Server: flightcenter-nagios2
+
+
+1.4. Install NRDS Clients on Machines to be Monitored
+-----------------------------------------------------
+
+1. If not already installed, install wget:
+
+    # yum -y install wget
+    
+2. Download NRDP Client Installation files:
+
+    # wget https://github.com/alces-software/nagios/archive/master.zip
+    
+3. Extract the tarball:
+
+    # unzip master.zip
+    
+4. Install the nrds client 
+
+Run the following command:
+
+    # cd nagios-master
+    
+    # ./installnrds <hostname> <interval>
+    
+----------------------------------------------------------------------------------------------------------------------
+Example: Install NRDS clients onto the LAPLACE cluster CONTROLLER, with checks that will be run at 3 minute intervals:
+----------------------------------------------------------------------------------------------------------------------
+    # ./installnrds controller.pri.laplace 3 
+----------------------------------------------------------------------------------------------------------------------
+    
+5. Install the Client side checks: (this will contain the check_ping command only for the moment).
+
+    # ./installchecks.sh
+    
+Installation of the Client side checks is now complete. Pay attention over the next few minutes to the Nagios Web UI/Slack for updated messages.
+
+
+2. Adding a Host to Monitoring
+-------------------------------
+
+Preconditions:
+1. Complete (The cluster a node is a member of must have already been added to monitoring).
+
+2.1 Adding a Host to Monitoring - Server Side Configuration
+-----------------------------------------------------------
+
+1. Login to flightcenter-nagios2 as root
+
+2. Change directory to /usr/local/nagios/etc/objects/<cluster-name>/hosts
+
+3. Copy one of the files for a host object definition
+
+    # cp <hostname>.<cluster>.cfg <new hostname>.<cluster>.cfg
+    
+4. Edit the host name in the object definition:
+
+    # sed -i 's/<hostname>/<new hostname>/g' <new hostname>.cfg
+    
+5. Add new host to the hostgroup object that represents <cluster>:
+
+    # cd /usr/local/nagios/etc/objects/<cluster> 
+    
+Don't forget to escape the "." (dot) characters:
+
+    # sed -i 's/\([[:space:]]members.*\)/\1, <new hostname>/g' <cluster>-hostgroup.cfg
+
+**************************************************************************************
+Example:
+**************************************************************************************
+# sed -i 's/\([[:space:]]members.*\)/\1, node05\.pri\.laplace/g' laplace-hostgroup.cfg
+***************************************************************************************
+6. Run a sanity check on the Nagios Configuration to ensure the syntax and structure is valid:
+
+    # /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+    
+7. Restart the Nagios Service:
+
+    # systemctl restart nagios 
+    
+Login to the Nagios UI on https://flightcenter-nagios2.alces-flight.com/nagios and confirm that the new host is visible under the 'Host Groups' section on the navigation menu.
+    
+You will then be able to see the new Host in the UI, under the list of hosts, with its hostname shown and a status of PENDING.
+
+
+2.2 Adding a Host to a Cluster - Client Side Configuration
+----------------------------------------------------------
+
+1. Log in to the host to be monitored.
+
+2. Download latest version of the installation package:
+
+    # wget https://github.com/alces-software/nagios/archive/master.zip
+    
+3. Extract the tarball:
+
+    # unzip master.tgz
+    
+4. Install the nrds client:
+
+    # cd nagios-master
+
+Run the following command:
+    
+    # ./installnrds <hostname> <interval>
+    
+5. Install the Client side checks: (this will contain the check_ping command only for the moment and is used as a host check).
+
+    # ./installchecks.sh
+    
+Installation of the Client side checks is now complete. Pay attention over the next few minutes to the Nagios Web UI for updated messages.
+
+
+
+
+3. Adding Service Checks to Hosts
+---------------------------------
+
+Preconditions: 
+
+1. Complete (Cluster has been added to Monitoring)
+2. Complete (Host has been added to Monitoring...unless we're adding more services to the Controller, in which case this was added in 1).
+
+***** WARNING *****
+
+Additional of the initial service is not consistent with the way in which the host is initially added, consider revising.
+
+***** WARNING *****
+
+
+3.1 Adding Service Checks to Hosts - Server Side Configuration
+--------------------------------------------------------------
+
+1. If not present, create a new directory to store service object definitions for the host to be monitored.
+
+    # mkdir /usr/local/nagios/etc/objects/<cluster>/services
+
+3.2. Define a new Service Object for a Host
+-------------------------------------------
+
+1. If not present, create a new file for the Host's Service Object definition:
+
+    # cd /usr/local/nagios/etc/objects/<cluster>/services
+    # vi <hostname>-services.cfg
+
+2. Add the service definition(s) in to this file. Paste the following and modify accordingly:
+
+define service {
+        use                     passive_service
+        host_name               <hostname>
+        service_description     <Service Description>
+}
+
+---------------------------------------------------------------------------------------------------------------------
+Example: Adds a Service Object Definition that checks if a filesystem is mounted on compute node: node01.pri.laplace
+---------------------------------------------------------------------------------------------------------------------
+define service {
+        use                     passive_service
+        hostgroup_name          node01.pri.laplace
+        service_description     check_ismounted
+}
+----------------------------------------------------------------------------------------------------------------------
+
+3. Repeat the previous step if more services are to be checked on a particular host. The only configuration directive that requies changing in this file, will be the service_description.
+
+Then save and close the file.
+
+3. Run a sanity check on the Nagios Configuration to ensure the syntax and structure is valid:
+
+    # /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+4. Restart the Nagios service:
+
+    # systemctl restart nagios
+
+
+Note that in the Nagios UI, the service may appear to be UP and OK before any passive data has been sent to the NDRS server. This is because in Nagios Core, services are assumed to have an OK state by default. This default setting has not been changed on flightcenter-nagios2.
+
+
+3.2 Adding Service Checks to Hosts - Client Side Configuration
+--------------------------------------------------------------
+
+There will be a list of the plugins and checks are to be used: See document Nagios - <cluster> Configuration, for the requisite checks for each cluster. 
+
+1. Log in to the controller of the cluster the target host is a member of.
+
+2. Change directory to: /root/nagios/plugins/libexec.
+
+    # cd /root/nagios/plugins/libexec
+
+2. Copy each check required as follows:
+
+This will place the service checks in the correct location on the host to be monitored.
+
+    # scp <checkname>1 <checkname>2 <checkname>... <checkname>N <hostname>:/usr/local/nagios/libexec/
+    
+********************************************************************************************************************************************************************************************************
+Note: If a check is not present where it should be, then or message me (Ross) on slack : INADEQUATE SOLUTION, availablility of all plugins being worked on...unless one does not exist and needs to be written.
+********************************************************************************************************************************************************************************************************
+
+3. Log back in to the machine to be added to monitoring and set permissions and ownership on /usr/local/nagios/libexec/*
+
+    Change ownership of all scripts to nagios user and group:
+    
+    # chown -R nagios:nagios /usr/local/nagios/libexec
+    
+    Change acccess so that only nagios can read and execute scripts: 
+    
+    # chmod 550 /usr/local/nagios/libexec/*
+
+4. Update nrds.cfg on machine to be monitored
+
+    # cd /usr/local/nrdp/clients/nrds
+    # cp -p nrds.cfg nrds.cfg-$(date +"%Y-%m-%d").bak
+
+    # vi nrds.cfg 
+
+Append the following lines to the file, to specify the additional checks on the machine to be monitored:
+
+    command<[Name of Command>=/usr/local/nagios/libexec/check_<service to check> <arguments to the command >
+
+------------------------------------------------------------------------------------------------------------
+Example: Add the check for mounted file systems, which will check that a fs is mounted /users
+------------------------------------------------------------------------------------------------------------
+command[check_ismounted]=/usr/local/nagios/libexec/check_ismounted /users
+------------------------------------------------------------------------------------------------------------
+
+<WIP>
+*********************************************************************************************************************************************************************************************************
+*********************************************************************************************************************************************************************************************************
+*********************************************************************************************************************************************************************************************************
+*********************************************************************************************************************************************************************************************************
+
+
+4. Adding Hardware Service Checks to Hosts
+------------------------------------------
+
+***
+
+IN GENERAL, CONFIGURE THE CLIENT SIDE FIRST AS THIS PREVENTS FALSE POSITIVES!
+Or...configure server side first, so show the moitor display "Unknowns", then recover.
+
+
+***
+4.1. Create Service Object Definitions - Server Side Configuration
+------------------------------------------------------------------
+
+Log in to flightcenter-nagios2
+
+# cd /usr/local/nagios/etc/objects/laplace/services
+
+Open the file containing the host object definition for the host that will have it's service checks and add the following:
+
+define service {
+        use                     passive_service
+        host_name               <host>.pri.<cluster>
+        service_description     <check>
+}
+
+Make sure to modify the above object definition so that the correct host and service check is configued.
+
+Remember: <check> corresponds to the command that "maps" on to the script which has its path specified in the nrds.cfg file on the host.
+
+Then save and close the file and verify the syntax and structure of the updated agios configuration: 
+
+    # /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+    
+Restart Nagios
+
+    # systemctl restart nagios
+
+
+4.2. Install and Configure checks on machines to be monitored - Client Side Configuration
+-----------------------------------------------------------------------------------------
+
+**ONly for controller ?**
+4.2.1. Install ipmi-tool
+------------------------
+
+On some machines, the epel is installed. The ipmi tool should be installed from the centos-7-base repository and NOT the epel repository.
+
+    # yum --disablerepo epel install freeipmi
+
+If this errors and the output is: EPEL is not found, run the following:
+
+    # yum install freeipmi
+    
+Now that freeipmi has been installed, modify the freeipmi config and set the username and password. 
+
+    # vi /etc/freeipmi/freeipmi.conf
+    
+Add the two lines:
+
+    username admin
+    
+    below the # username myusername sample entry (commented out)
+    
+    password <password>
+    
+    below the # password mypassword sample entry (commented out)
+    
+    
+4.2.2 Verify The Script Runs Correctly
+--------------------------------------
+
+# ./alces-ipmi-check
+
+Check that: 
+1) /var/spool/nagios/ecc-check appears and contains files: <host>.ecc.out and each of these files has correct content.
+2) /var/spool/nagios/ipmi-check appears and contains files <host>.ipmi.out and each of these files has the correct content.
+
+4.2.3. Add the script to retrieve IPMI sensor output
+----------------------------------------------------
+
+Place the script named: alces-impi-check into the /etc/cron.hourly. This script runs with root permissions. The directories it creates are owned by nagios, however the files that are written to them via the ipmi tools (sensors and sel), are owned by root. Nagios does have read permissions, so this should pose no problems in terms of accessing the data for passive checks.
+
+# cd /etc/cron.hourly
+
+This script should be present on the CONTROLLER:
+
+#!/bin/bash
+# script to retrieve IPMI sensors output
+
+export PATH=/opt/metalware/opt/pdsh/bin:/opt/metalware/opt/genders/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[[ ! -x /opt/metalware/opt/genders/bin/nodeattr ]] && exit 0
+[[ ! -d /var/spool/nagios/ipmi-check ]] && mkdir -p /var/spool/nagios/ipmi-check && chown -R nagios /var/spool/nagios/ipmi-check
+[[ ! -d /var/spool/nagios/ecc-check ]] && mkdir -p /var/spool/nagios/ecc-check && chown -R nagios /var/spool/nagios/ecc-check
+
+. /etc/profile
+
+for node in `nodeattr -s compute` `nodeattr -s storage` master1 master2
+do
+   ipmi-sensors -f -D LAN_2_0 -h $node.bmc > /dev/null 2>&1
+   ipmi-sensors -D LAN_2_0 -h $node.bmc > /var/spool/nagios/ipmi-check/$node.ipmi.out 2>&1
+   ipmi-sel -D LAN_2_0 -h $node.bmc 2> /dev/null > /var/spool/nagios/ecc-check/$node.ecc.out 2>&1
+
+done
+
+# remove files for login nodes
+rm -f /var/spool/nagios/ecc-check/login* /var/spool/nagios/ipmi-check/login*
+
+
+
+4.2.3 Verify Nagios Check Operations
+------------------------------------
+
+Before running the Nagios check under cron, find the commands that are dependencies and ensure they run OK.
+
+Example:
+
+We want to Check the System Disk (Check systemdisk) on master1.pri.laplace.
+
+1. Open the config file /usr/local/nrdp/clients/nrds/nrds.cfg
+
+note the following line entry:
+
+command[Check systemdisk]=/usr/local/nagios/libexec/check_PERC_H7X0 0 0
+
+open the script check_PERC_H7X0 and find the commands it runs. In this case we see that:
+
+sudo /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo -l $vol -A $card 
+
+2. Run, as root the command: 
+
+    # /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo -l 0 -A 0 | grep -i "State"
+    
+    We should see state as Optimal.
+    
+Note that this command also uses sudo. To use sudo, the nagios user will need to be given permission to do so.
+
+3. Grant permission for Nagios to run commands as sudo.
+
+    # visudo
+
+Add the following to the Command Aliases section, labelled: ## Command Aliases
+
+    Cmnd_Alias MONITOR = /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo *, /usr/sbin/crm_mon -s, /usr/sbin/multipath -ll, /usr/bin/ipmitool sensor, /usr/bin/SMcli -d -v, /usr/bin/ipmitool sel elist
+
+Then append the following to the (bottom) of the file:
+
+    nagios    ALL=(ALL)       NOPASSWD: MONITOR
+
+Save and close the file.
+
+
+4.2.4 Install Nagios Checks
+---------------------------
+
+Ensure that the appropriate hardware check is placed in 
+    
+    /usr/local/nagios/libexec
+    
+Set ownership and permissions:
+
+    # chown nagios:nagios *
+    # chmod 550 *
+
+*********************************************************************************************************************************************************************************************************
+*********************************************************************************************************************************************************************************************************
+*********************************************************************************************************************************************************************************************************
+
+</WIP>
+
+5. Troubleshooting <WIP>
+---------------
+
+Useful information can be found from the following:
+
+/usr/local/nagios/var/nagios.log (To check the server side Nagios log file)
+/var/log/cron (To check the client side cron log to ensure that the scheduled task is being run)
+crontab -u nagios -l ; verify that the cron job is present in the nagios user's cron file
+</WIP>
+
+
