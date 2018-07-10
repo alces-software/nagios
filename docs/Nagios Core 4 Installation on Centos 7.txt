@@ -1,0 +1,619 @@
+flightcenter-nagios2 Build Guide
+
+This document describes the installation of Nagios 4 Core and basic configuration to get flightcenter-nagios2 up and running. 
+
+1. Self monitoring Nagios machine
+2. Creation of the flightcenter hostgroup, used to manage flightcenter machines using NRPE
+3. Email and slack configuration for alerts and notifications.
+4. https configuration.
+
+
+Connectivity Prerequisites
+
+Ensure that access over HTTP/HTTPS is available. This must be at two layers.
+First, ensure appropriate firewall rules are in place using the Amazon EC2 web console.
+Second, ensure that the server's local firewall rules allow access.
+
+Configure SELinux
+-----------------
+If not already disabled, then disable SELinux. To check if SELinux is enforced, type
+
+# getenforce
+
+This will return the status of SELinux. 
+
+Disable SELinux
+Note: This guide disables SELinux. Setting SElinux to permissive is also acceptable.
+
+# setenforce 0
+
+Modify /etc/selinux/config and change enforcing to disabled.
+
+Install Nagios Core 4 Dependencies
+---------------------------------
+
+Update Packages and Repository Metadata:
+
+# yum -y upgrade
+
+Install Dependencies:
+
+# yum -y install httpd 
+# yum -y install php
+# yum -y install php-cli
+# yum -y install gcc 
+# yum -y install glibc 
+# yum -y install glibc-common 
+# yum -y install gd 
+# yum -y install gd-devel 
+# yum -y install net-snmp 
+# yum -y install openssl-devel
+# yum -y install wget 
+# yum -y install unzip
+
+Create Nagios User and Group:
+
+# useradd nagios
+# groupadd nagcmd
+
+Add the nagios and apache user to the 'nagioscmd' group.
+
+# usermod -a -G nagcmd nagios
+# usermod -a -G nagcmd apache
+
+Download and Install Nagios
+
+Change directory to the /tmp directory and build
+
+# cd /tmp
+
+Download the Nagios Core Tarball
+
+# wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-<current version>.tar.gz
+
+Download the Nagios Plugins
+
+# wget http://www.nagios-plugins.org/download/nagios-plugins-<curent version>.tar.gz
+
+Extract The Nagios Core and Nagios Plugins Tarball
+
+# tar zxvf nagios-4.3.4.tar.gz
+# tar zxvf nagios-plugins-<current version>.tar.gz
+# cd nagios-<current version>
+
+Build and Install Nagios Core
+
+# ./configure --with-command-group=nagcmd
+# make all
+# make install
+# make install-init
+# systemctl daemon-reload
+# make install-config
+# make install-commandmode
+# make install-webconf
+
+Create a password for the nagiosadmin web GUI interface login
+
+# htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+
+Install Nagios Plugins
+
+Now that Nagios is installed, we need to install the plugins so that it can utilize them for checks.
+
+# cd /tmp/nagios-plugins-<latest version>
+# ./configure --with-nagios-user=nagios --with-nagios-group=nagios --with-openssl
+# make all
+# make install
+
+Change httpd to bind to IPv4 interfaces.
+
+By default, httpd is configured to bind only on IPv6 interface.
+
+Open /etc/httpd/conf/httpd.conf and replace the following httpd directive:
+
+Listen 80
+
+with:
+
+Listen 10.78.0.31:80  # httpd will bind to flightcenter-gw's private IP address.
+Listen 127.0.0.1:80   # httpd will bind to flightcenter-gw's local IP address.
+
+Start Nagios
+
+
+# systemctl start httpd
+# systemctl start nagios
+
+You should now be able to access your Nagios web GUI by navigating to http://<nagios server ip address>/nagios/
+
+
+Installation of check_nrpe Plugin
+---------------------------------
+
+The Nagios Core host will need to communicate with remote hosts. On the remote hosts, the Nagios Remote Plugin Executor
+will be installed. For the NRPE to invoke actions on a remote host on behalf of the monitoring host, the check_nrpe plugin must be
+installed on the monitoring host.
+
+Download the NRPE addon source code.
+
+# cd /tmp
+# wget --no-check-certificate -O nrpe.tar.gz https://github.com/NagiosEnterprises/nrpe/archive/nrpe-3.2.1.tar.gz
+# tar xvzf nrpe.tar.gz
+# cd nrpe-nrpe-3.2.1/
+
+check_nrpe is the only component of the NRPE source tarball that needs to be installed on the monitoring machine.
+
+Build and Install ONLY the check_nrpe plugin.
+
+# ./configure
+# make check_nrpe
+# make install-plugin
+
+The check_nrpe plugin is now installed. The Nagios Core monioring host will use this to initiate communications with NRPE on the remote hosts.
+
+*******************************************************************************************************
+*At this point, the NRPE addon and the Nagios plugins should be installed on at least one remote host.*
+*******************************************************************************************************
+
+Verify Nagios Comunications with Remote host using check_nrpe, by running the command:
+
+# /usr/local/nagios/libexec/check_nrpe -H <IP address of remote Nagios host>
+
+To manually invoke the check_nrpe plugin to verify Nagios communications.
+
+Backup Existing Nagios Configurations
+#####################################
+
+Create a structure to allow backups of configurations to be stored.
+
+# mkdir -p /root/nagios_backup_files/objects
+# cp -p /usr/local/nagios/etc/objects/commands.cfg /root/nagios_backup_files/objects
+
+Create a Command Definition
+###########################
+
+Open the EXISTING commands.cfg file located in /usr/local/nagios/etc/objects
+This configuration file contains sample command definitions provided as examples. The commands defined in this file can be referenced
+from host, service and contact definitions. It is not mandatory to place the commands here, but good practice to keep things organised.
+
+Add the following text to the bottom of the commands.cfg file
+
+#
+# Commands used by Alces-software
+#
+#
+#
+define command{
+	command_name	check_nrpe
+	command_line	$USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG$
+}
+
+
+Create Host and Service Definitions
+###################################
+
+The monitoring host manipulates objects, such as commands, hosts, services and contacts. Nagios must be told about these objects via configuration files. This is done
+by defining objects in the the configuration. So, command, host, service and contact objects are defined in the Nagios configuration file. In the previous section, we already
+added a command definition to a configuration file and in this section we will add some defintions of hosts and services.
+
+The Nagios configuration is spread over multiple files. There is one main coniguration file, /usr/local/nagios/etc/nagios.cfg and this file contains references to the other config file.
+This allows the Nagios administrator to organise their object definitions, however they see fit.
+
+/usr/local/nagios/etc/objects/localhost.cfg contains a host definition and a set of service definitions. The instruct Nagios how often it should check a service or host and how it should check it etc.
+
+
+Create a file that corresponds to the Remote Host to be Monitored. This example will use flightcenter-gw as the host to be monitored.
+
+# cd /usr/local/nagios/etc/objects
+# cp -p localhost.cfg flightcenter-gw.cfg
+
+Add a reference to the new host configuration file in the main nagios file, by opening /usr/local/nagios/etc/nagios.cfg and adding the following in the OBJECT CONFIGURATION FILES section:
+
+cfg_file=/usr/local/nagios/etc/objects/flightcenter-gw.cfg
+
+An entire directory can also be taken to import all its config files, but that's for later!
+
+In the following Definitions, we shall create Host and Service definitions for the flightcenter-gw host.
+
+Create Host Definition
+######################
+
+Replace the host definition with the following:
+
+define host{
+        use                     linux-server            ; Name of host template to use
+                                                        ; This host definition will inherit all variables that are defined
+                                                        ; in (or inherited by) the linux-server host template definition.
+        host_name               flightcenter-gw         ; FQDN: flightcenter-gw.alces-flight.com
+        alias                   flightcenter-gw
+        address                 10.78.0.10
+        }
+
+
+Create Service Definitions (1)
+##############################
+
+CPU Load
+
+Add the following Service Defintion to Check the CPU load in the remote host:
+
+# Define a service to check the CPU load
+
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       flightcenter-gw
+        service_description             CPU Load
+        check_command                   check_nrpe!check_load
+        }
+
+A above defintion defines a service, that makes use of another object (provided as a template in templates.cfg), and applies it to the host: flightcenter-gw.
+The command run localy is check_nrpe, which has been installed as a plugin. and this passes the check_load argument to check_nrpe. The check_load argument, in turn
+is passed to the NRPE daemon running on the remote host. This in turn, using the configuration it has loaded from /usr/local/nagios/etc/nrpe.cfg determines what to do with check_load.
+If we look in this config file, we see the following: mapped to command[check_load]=/usr/local/nagios/libexec/check_load -r -w .15,.10,.05 -c .30,.25,.20. Thus, the NRPE daemon will
+run the command /usr/local/nagios/libexec/check_load -r -w .15,.10,.05 -c .30,.25,.20. This is a command that was installed as a Nagios Plugin.
+
+Disk Space
+
+First, we must find the device name of the root parition on the remote machine.
+
+On the remote machine to be monitored, as root, type:
+
+# fdisk -l
+
+It can be seen that the device name of the remote parition is: /dev/xvda1:
+
+Add the following Service Defintion to Check the Disk Space in the remote host:
+
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       flightcenter-gw
+        service_description             Check Disk Space
+        check_command                   check_nrpe!check_xvda1
+        }
+
+The argument: check_xvda1 will be passed to NRPE on the remote machine, so we must ensure that check_xvda1 maps to the appropriate command on the remote machine.
+
+Examining /usr/local/nagios/etc/nrpe.cfg on the remote machine, we see that by default, check_hda1 is expected for checking the disk, but our machine does not have hda1, instead it has a root
+partition named xvda1. 
+
+Change the following line:
+
+command[check_hda1]=/usr/local/nagios/libexec/check_disk -w 20% -c 10% -p /dev/hda1
+
+to:
+
+command[check_xvda1]=/usr/local/nagios/libexec/check_disk -w 20% -c 10% -p /dev/xvda1
+
+
+Add the following to the rest of the file:
+
+
+# Define a service to check the number of currently logged in
+# users on the local machine.  Warning if > 20 users, critical
+# if > 50 users.
+
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       flightcenter-gw
+        service_description             Current Users
+	check_command			check_nrpe!check_users
+        }
+
+
+# Define a service to check the number of currently running procs
+# on the local machine.  Warning if > 250 processes, critical if
+# > 400 processes.
+
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       flightcenter-gw
+        service_description             Total Processes
+	check_command			check_nrpe!check_total_procs
+        }
+
+
+
+# Define a service to check for Zombie Processes on the remote machine 
+
+define service{
+        use                             generic-service         ; Name of service template to use
+        host_name                       flightcenter-gw
+        service_description             Zombie Processes
+	check_command			check_nrpe!check_zombie_procs
+        }
+
+
+
+Restart Nagios
+##############
+
+Verify Nagios configuration changes are synactically correct:
+
+# /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+Restart NRPE on the REMOTE host.
+
+# systemctl restart nrpe
+
+Restart Nagios on the local / monitoring host.
+
+# systemctl restart nagios
+
+
+Verify Nagios Changes in UI
+###########################
+
+Login to the Nagios interface and observe the changes in the admin interface.
+
+
+In the following example, we shall create Host and Service definitions for the flightcenter-ganglia host.
+
+Copy the existing flightcenter-gw configuration and create a new file flightcenter-ganglia.cfg:
+
+# cp -p /usr/local/nagios/etc/objects/flightcenter-gw.cfg /usr/local/nagios/etc/objects/flightcenter-ganglia.cfg
+
+Change each entry for "flightcenter-gw" with "flightcenter-ganglia":
+
+# sed -i 's/flightcenter-gw/flightcenter-ganglia/g' /usr/local/nagios/etc/objects/flightcenter-ganglia.cfg
+
+Change each entry for "10.78.0.10" with "10.78.0.20":
+
+# sed -i 's/10.78.0.10/10.78.0.20/g' /usr/local/nagios/etc/objects/flightcenter-ganglia.cfg
+
+At this point, you will need to have deployed NRPE and The Nagios Plugins onto flightcenter-ganglia in order to continue. Once appropriate adjustments have been made such as tweaking of command
+definitions, log back in to the Monitoring Host, restart Nagios and Verify the changes in the Web UI.
+
+Example Tweaking of Commands.
+#############################
+
+In the /usr/local/nagios/etc/objects/flightcenter-ganglia there is a command to check the host for disk space.
+
+The argument for the check_nrpe command is : check_xvda1 This must be changed on the remote host.
+
+Email Configuration
+###################
+
+Start by taking a backup of the following contacts.cfg file:
+
+# cp -p /usr/local/nagios/etc/objects/contacts.cfg /usr/local/nagios/etc/objects/contacts.cfg.orig
+
+Set appropriate values for the 'alias' and 'email' parameters of the contacts definition.Note that this user 'nagiosadmin' is already a member of the 'admins' contacts group.
+
+Run the sanity check on the nagios configuration file, then restart Nagios.
+
+# /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+# systemctl restart nagios
+
+You can run a test that you get a notification on a status change by changing the name of a command:
+
+e.g. IN ganglia, open /usr/local/nagios/etc/nrpe.cfg and change:
+	
+command[check_xvda1]=/usr/local/nagios/libexec/check_disk -w 20% -c 10% -p /dev/xvda1
+
+to:
+
+command[check_xvda221]=/usr/local/nagios/libexec/check_disk -w 20% -c 10% -p /dev/xvda1
+
+and restart nrpe:
+
+# systemctl restart nrpe
+
+Then await the next check.
+
+Slack Configuration
+###################
+
+Slack have written a app that will post Nagios alerts to slack channels.
+
+Use of the Nagios integration requires installing and configuring our Nagios plugin. To do so, follow these steps:
+
+Install the necessary perl modules with: 
+
+# yum -y install libwww-perl
+# yum -y libcrypt-ssleay-perl
+
+Download the plugin and move it into place:
+
+# wget https://raw.github.com/tinyspeck/services-examples/master/nagios.pl
+# cp nagios.pl /usr/local/bin/slack_nagios.pl
+# chmod 755 /usr/local/bin/slack_nagios.pl
+
+Edit the slack_nagios.pl, find the $opt_domain and $opt_token variables, and set them to:
+
+my $opt_domain = "alces.slack.com"; # Your team's domain
+my $opt_token = "vGnu5fmIgybuqC7OFIIvcB6Q"; # The token from your Nagios services page
+
+Configure Nagios to use the plugin by creating a slack_nagios.cfg file alongside the rest of your Nagios configs. Start with the following content:
+
+Organisation of Infrastructure
+##############################
+Flightcenter Hostgroup
+
+Define a Hostgroup Object. This is an object definition that applies configuration options to a group of related hosts, for easier control. 
+Hostgroup definitions shall we placed in their own directory and each file must have a ".cfg" extension.
+
+Create a directory:
+
+# /usr/local/nagios/etc/objects/flightcenter
+
+Create a new file named flightcenter.cfg and place the following contents in that file:
+
+
+define hostgroup{
+        hostgroup_name  flightcenter ; The name of the hostgroup
+        alias           flightcenter machines ; Long name of the group
+        members         flightcenter-nagios2,flightcenter-gw,flightcenter-ganglia     ; Comma separated list of hosts that belong to this group
+        }
+
+# Define a service to "ping" the local machine
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             PING
+	check_command			check_ping!100.0,20%!500.0,60%
+        }
+
+
+# Define a service to check the disk space of the root partition
+# on the local machine.  Warning if < 20% free, critical if
+# < 10% free space on partition.
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             Root Partition
+	check_command			check_local_disk!20%!10%!/
+        }
+
+
+
+# Define a service to check the number of currently logged in
+# users on the local machine.  Warning if > 20 users, critical
+# if > 50 users.
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             Current Users
+	check_command			check_local_users!20!50
+        }
+
+
+# Define a service to check the number of currently running procs
+# on the local machine.  Warning if > 250 processes, critical if
+# > 400 processes.
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             Total Processes
+	check_command			check_local_procs!250!400!RSZDT
+        }
+
+
+
+# Define a service to check the load on the local machine. 
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             Current Load
+	check_command			check_local_load!5.0,4.0,3.0!10.0,6.0,4.0
+        }
+
+
+
+# Define a service to check the swap usage the local machine. 
+# Critical if less than 10% of swap is free, warning if less than 20% is free
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             Swap Usage
+	check_command			check_local_swap!20!10
+        }
+
+
+
+# Define a service to check SSH on the local machine.
+# Disable notifications for this service by default, as not all users may have SSH enabled.
+
+define service{
+        use                             local-service         ; Name of service template to use
+        hostgroup_name                  flightcenter
+        service_description             SSH
+	check_command			check_ssh
+	notifications_enabled		0
+        }
+
+
+
+# Define a service to check HTTP on the local machine.
+# Disable notifications for this service by default, as not all users may have HTTP enabled.
+
+define service{
+        use                             local-service         ; Name of service template to use
+        host_name			!flightcenter-gw,!flightcenter-ganglia
+        hostgroup_name                  flightcenter
+        service_description             HTTP
+	check_command			check_http
+	notifications_enabled		0
+        }
+
+Now ensure ownership is correct by running:
+
+# chown -R nagios:nagios /usr/local/nagios/etc/objects/flightcenter
+
+Then update the nagios main configuration file, so that it becomes aware of the files in the hostgroup directory:
+
+Add the following to /usr/local/nagios/etc/nagios.cfg:
+
+cfg_dir=/usr/local/nagios/etc/objects/flightcenter
+
+Remove entries for references to other flightcenter config files (they are now redundant because of the new cfg_dir entry from the previous line).
+
+
+Then ensure that the configuration is syntactically valid and includes all required object definitions:
+
+#/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+Then restart Nagios:
+
+# systemctl restart nagios
+
+
+
+Setting up HTTPS on the Nagios Web UI
+#####################################
+
+Install the SSL Module for Apache httpd:
+
+# yum -y install mod_ssl
+
+Create directory to store the CA files and the private key
+
+# mkdir /etc/httpd/ssl
+
+Edit the SSL configuration in httpd
+
+#   Server Certificate:
+# Point SSLCertificateFile at a PEM encoded certificate.  If
+# the certificate is encrypted, then you will be prompted for a
+# pass phrase.  Note that a kill -HUP will prompt again.  A new
+# certificate can be generated using the genkey(1) command.
+SSLCertificateFile /etc/httpd/ssl/cert.pem
+
+
+#   Server Private Key:
+#   If the key is not combined with the certificate, use this
+#   directive to point at the key file.  Keep in mind that if
+#   you've both a RSA and a DSA private key you can configure
+#   both in parallel (to also allow the use of DSA ciphers, etc.)
+SSLCertificateKeyFile /etc/httpd/ssl/privkey.pem
+
+
+#   Server Certificate Chain:
+#   Point SSLCertificateChainFile at a file containing the
+#   concatenation of PEM encoded CA certificates which form the
+#   certificate chain for the server certificate. Alternatively
+#   the referenced file can be the same as SSLCertificateFile
+#   when the CA certificates are directly appended to the server
+#   certificate for convinience.
+SSLCertificateChainFile /etc/httpd/ssl/fullchain.pem
+
+
+Modify /etc/httpd/conf/httpd.conf to redirect users from http to https on /nagios:
+
+# Redirect from http to https Nagios
+
+RewriteEngine On
+RewriteCond %{HTTPS} !=on
+RewriteRule ^/?nagios/(.*) https://%{SERVER_NAME}/nagios/$1 [R,L]
+
+# apachectl configtest
+
+Run an Apache configtest:
+
+# systemctl reload httpd && tail -f /var/log/httpd/
+

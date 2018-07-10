@@ -28,7 +28,8 @@
 # 2 PSUs per chassis. 4 Nodes per chassis. The first node in each chassis's view of PSU health is reported.
 
 # set ipmi-check spool directory
-checkdir=/var/spool/nagios/ipmi-check
+# checkdir=/var/spool/nagios/ipmi-check
+checkdir="/home/ross/Desktop/Scripts/bash/nagios/testing/ipmi-check"
 
 # Check that ipmi output files are available
 [[ -d $checkdir ]] || exit 3
@@ -42,12 +43,20 @@ if [ ! $remote ] ; then
 
    psu_status_fault=0
    psu_status_good=0
+   psu_status_inconsistent=0
    psu_redundancy_fault=0
    psu_redundancy_good=0
-  
+   nodes_per_chassis=4
+   good_nodes_per_chassis=0
+
    # Arrays to keep track of which node's PSUs need attention. 
-   declare -a unhealthy_psus
-   declare -a unhealth_redundancy_psus
+   # Use this ot keep track of which nodes to check when all nodes in a chassis report a PSU Status problem
+   declare -a unhealthy_psus_node
+
+   # Use this to keep track of which nodes to check when 0 < x < ${nodes_per_chassis}, x nodes report a problem, and ${nodes_per_chassis} - x report OK
+   declare -a inconsistent_psus_node
+
+   declare -a unhealth_redundancy_psus_node
 
    # The following string is what we are hoping to find for the PSU Status as reported from each node per chassis.
    # Anything other than this indicates a problem with a PSU.
@@ -60,11 +69,7 @@ if [ ! $remote ] ; then
    psu_redundancy_ok="'Fully Redundant'"
 
 
-   # Precondition: The first node in the list has an ID of node01.txt
-   # Postcondition: Fault is equal to the number of nodes checked that report a fault.
-   #                Good is equal to the number of nodes chcked that report OK
-
-   # Get listening of NODE files and iterate through each one 
+   # Get listing of NODE files and iterate through each one 
    for file in `ls -1 $checkdir/$node_name*`
    do
 
@@ -74,32 +79,41 @@ if [ ! $remote ] ; then
       # Remove leading zeros
       node_nr=`echo $node_nr | sed 's/^0*//'`
       
-      # If NOT the 4th node in the list, skip this iteration.
-      if [[ $(($node_nr % 4)) != 1 ]] ; then
-	      continue
-      fi
-
+      # check for the PSU status in a Chassis from a node's perspective
       if [ `egrep -i "psu (1|2) Status" $file | grep -cv "$psu_status_ok\$"` -gt 0 ] ; then
          psu_status_fault=`expr $psu_status_fault + 1`
-	 unhealthy_psus=("${unhealthy_psus}""$node_name$node_nr ")
+	 bad_nodes_per_chassis=`expr ${bad_nodes_per_chassis} + 1`
       else
          psu_status_good=`expr $psu_status_good + 1`
+         good_nodes_per_chassis=`expr $good_nodes_per_chassis + 1`
       fi
 
-      if [ `egrep -i "PSU Redundancy" $file | grep -cv "$psu_redundancy_ok\$"` -gt 0 ] ; then
-         psu_redundancy_fault=`expr $psu_redundancy_fault + 1`
-	 unhealthy_redundancy_psus=("${unhealthy_redundancy_psus}""$node_name$node_nr ")
-      else
-	 psu_redundancy_good=`expr $psu_redundancy_good + 1`
+      # Every ${nodes_per_chassis} nodes, check how many nodes are reporting errors
+      if [ $((${node_nr} % ${nodes_per_chassis})) == 0 ] ; then
+
+	  # Not all nodes agree about their Chassis PSU Status
+          if [ ${good_nodes_per_chassis} -lt ${nodes_per_chassis} ] && [ ${good_nodes_per_chassis} -gt "0" ] ; then
+		  inconsistent_psus_node=("${inconsistent_psus_node[@]}" "node[$((${node_nr}-${bad_nodes_per_chassis }+1))]")
+		  psu_status_inconsistent=`eval ${psu_status_inconsistent} + 1`
+	  
+	  # All nodes agree their PSU Status is unhealthy
+          elif [ ${good_nodes_per_chassis} -eq 0 ] ; then
+		  unhealthy_psus_node=("${unhealthy_psus_node[@]}" "node[$((${node_nr}-${bad_nodes_per_chassis}+1))]")
+		  psu_status_fault=`eval ${psu_status_fault} + 1`
+
+	  # All nodes agree their PSU Status is OK.
+          elif [ ${good_nodes_per_chassis} -eq ${nodes_per_chassis} ] ; then
+              psu_status_good=`eval ${psu_status_good} + 1`
+
+	  # We are here if good_nodes_per_chassis is less than 0 or greater than nodes_per_chassis
+	  else
+              echo "Error! Invalid Number of good nodes reported! (Must be between 0 and 4 inclusive!)"
+          fi
+
+	  # Reset for the next chassis check
+	  good_nodes_per_chassis=0
+	  bad_nodes_per_chassis=0
       fi
    done
-
-   # Report information back
-   if [ $psu_status_fault -gt 0 ] || [ $psu_redundancy_fault -gt 0 ] ; then
-      echo "$psu_status_fault PSU Status Fault(s)! Check node(s): ${unhealthy_psus[@]}. $psu_redundancy_fault PSU Redundancy Fault(s)! Check node(s): ${unhealthy_redundancy_psus[@]}"
-      exit 1
-   else
-      echo "$psu_status_good node(s) report(s) no PSU faults and $psu_redundancy_good node(s) report(s) no PSU Redundancy problems."
-      exit 0
-   fi
+      # Now check for PSU Redundancy
 fi
