@@ -43,13 +43,19 @@ if [ ! $remote ] ; then
 
    psu_status_fault=0
    psu_status_good=0
+   psu_status_inconsistent=0
    psu_redundancy_fault=0
    psu_redundancy_good=0
    nodes_per_chassis=4
    good_nodes_per_chassis=0
 
    # Arrays to keep track of which node's PSUs need attention. 
+   # Use this ot keep track of which nodes to check when all nodes in a chassis report a PSU Status problem
    declare -a unhealthy_psus_node
+
+   # Use this to keep track of which nodes to check when 0 < x < ${nodes_per_chassis}, x nodes report a problem, and ${nodes_per_chassis} - x report OK
+   declare -a inconsistent_psus_node
+
    declare -a unhealth_redundancy_psus_node
 
    # The following string is what we are hoping to find for the PSU Status as reported from each node per chassis.
@@ -73,6 +79,7 @@ if [ ! $remote ] ; then
       # Remove leading zeros
       node_nr=`echo $node_nr | sed 's/^0*//'`
       
+      # check for the PSU status in a Chassis from a node's perspective
       if [ `egrep -i "psu (1|2) Status" $file | grep -cv "$psu_status_ok\$"` -gt 0 ] ; then
          psu_status_fault=`expr $psu_status_fault + 1`
 	 bad_nodes_per_chassis=`expr ${bad_nodes_per_chassis} + 1`
@@ -86,15 +93,17 @@ if [ ! $remote ] ; then
 
 	  # Not all nodes agree about their Chassis PSU Status
           if [ ${good_nodes_per_chassis} -lt ${nodes_per_chassis} ] && [ ${good_nodes_per_chassis} -gt "0" ] ; then
-		  unhealthy_psus_node=("${unhealthy_psus_node[@]}" "node[$((${node_nr}-${bad_nodes_per_chassis }+1))]")
+		  inconsistent_psus_node=("${inconsistent_psus_node[@]}" "node[$((${node_nr}-${bad_nodes_per_chassis }+1))]")
+		  psu_status_inconsistent=`eval ${psu_status_inconsistent} + 1`
 	  
 	  # All nodes agree their PSU Status is unhealthy
           elif [ ${good_nodes_per_chassis} -eq 0 ] ; then
-      	      echo "Error! PSU Faults reported by ${nodes_per_chassis} nodes! Check node[$((${node_nr}-${nodes_per_chassis}+1)) - ${node_nr}]"
+		  unhealthy_psus_node=("${unhealthy_psus_node[@]}" "node[$((${node_nr}-${bad_nodes_per_chassis}+1))]")
+		  psu_status_fault=`eval ${psu_status_fault} + 1`
 
 	  # All nodes agree their PSU Status is OK.
           elif [ ${good_nodes_per_chassis} -eq ${nodes_per_chassis} ] ; then
-		  echo "OK! node[$((${node_nr}-${nodes_per_chassis}+1)) - ${node_nr}] reporting a healthy PSU Status."
+              psu_status_good=`eval ${psu_status_good} + 1`
 
 	  # We are here if good_nodes_per_chassis is less than 0 or greater than nodes_per_chassis
 	  else
