@@ -1,0 +1,99 @@
+#!/bin/bash
+################################################################################
+# (c) Copyright 2007-2011 Alces Software Ltd                                   #
+#                                                                              #
+# HPC Cluster Toolkit                                                          #
+#                                                                              #
+# This file/package is part of the HPC Cluster Toolkit                         #
+#                                                                              #
+# This is free software: you can redistribute it and/or modify it under        #
+# the terms of the GNU Affero General Public License as published by the Free  #
+# Software Foundation, either version 3 of the License, or (at your option)    #
+# any later version.                                                           #
+#                                                                              #
+# This file is distributed in the hope that it will be useful, but WITHOUT     #
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        #
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License #
+# for more details.                                                            #
+#                                                                              #
+# You should have received a copy of the GNU Affero General Public License     #
+# along with this product.  If not, see <http://www.gnu.org/licenses/>.        #
+#                                                                              #
+# For more information on Alces Software, please visit:                        #
+# http://www.alces-software.org/                                               #
+#                                                                              #
+################################################################################
+
+# Script to check for memory ECC events logged in the IPMI system event log (SEL)
+# Pass the server IPMI interface IP address or name as the first parameter
+
+# set ecc-check spool directory
+checkdir=/var/spool/nagios/ecc-check
+
+# Check that ECC output files are available
+[[ -d $checkdir ]] || exit 3
+
+# Check that we've been passed a parameter
+remote=$1
+if [ ! $remote ] ; then
+
+   # Assume all nodes need checking
+   cecc=0
+   uecc=0
+   fault=0
+   good=0
+
+   for file in `ls -1 $checkdir/*`
+   do
+      if [ `egrep -ci "ECC|Memory" $file` -gt 0 ] ; then
+         # Found an error
+         if [ `grep -ci "to critical" $file` -gt 0 ] ; then
+            uecc=`expr $uecc + 1`
+         elif [ `grep -ci "to non-critical" $file` -gt 0 ] ; then
+            cecc=`expr $cecc + 1`
+         else
+            fault=`expr $fault + 1`
+         fi
+      else
+         good=`expr $good + 1`
+      fi
+   done
+
+   if [ $cecc -gt 0 ] || [ $uecc -gt 0 ] || [ $fault -gt 0 ] ; then
+      echo "ECC memory $uecc/$cecc/$fault UNC/COR/general fault(s)"
+      exit 1
+   else
+      echo "$good nodes report no ECC faults"
+      exit 0
+   fi
+fi
+
+# check we have output for this node
+if [ ! -f $checkdir/$remote.ecc.out ] ; then
+   echo "No log information found for $remote"
+   exit 3
+fi
+
+# the command to run to check the service
+checkcommand=`egrep -ic "ecc|memory" $checkdir/$remote.ecc.out | awk '{print $1}'`
+
+if [ $checkcommand -gt 0 ] ; then
+   # detected a memory fault, so check what type
+   uecc=`grep -ic " uncorrect" $checkdir/$remote.ecc.out | awk '{print $1}'`
+   cecc=`grep -ic " correctable" $checkdir/$remote.ecc.out | awk '{print $1}'`
+   if [ $uecc -gt 0 ] ; then
+      echo "Detected $uecc uncorrectable ECC errors on $remote"
+      exit 2
+   elif [ $cecc -gt 0 ] ; then
+      echo "Detected $cecc correctable ECC errors on $remote"
+      exit 1
+   else
+      echo "Detected $checkcommand memory errors on $remote"
+   fi
+   exit 1
+else
+   # No faults found
+   echo "No ECC events logged for $remote"
+   exit 0
+fi
+

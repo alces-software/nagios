@@ -6,9 +6,13 @@
 
 # Create a directory to place the checks in.
 
+host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
+host_type="controller"
+
 user=nagios
 group=nagios
-config_file="nrds/nrds.cfg"
+config_file="nrds/client-configs/${host_type}/nrds.cfg"
+
 printf ${config_file}
 
 if [ ! -f ${config_file} ];
@@ -58,15 +62,23 @@ fi
 
 # Copy checks in to the checks directory
 
-cp check_* ${plugindir}
-rc=$?
-if [ ${rc} -ne 0 ];
-then
-    printf "Error! Unable to copy checks into the target directory, aborting...\n"
-    exit ${rc}
-else
+# 
+
+for check in `egrep -o "check[A-Za-z_-]*" ${config_file}`
+do
+    echo "Copying ${check} ......................................."
+    cp nagios-plugins/${check} ${plugindir}
+    rc=$?
+    if [ ${rc} -ne 0 ];
+    then
+        printf "Error! Unable to copy check: ${check} into the target directory, aborting...\n"
+        exit ${rc}
+    else
     printf "Success! Checks copied in to plugin directory ${plugindir}...\n"
 fi
+    
+done
+
 
 # Set permissions on checks - Nagios user needs to read and execute only
 chmod 550 ${plugindir} 

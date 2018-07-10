@@ -1,0 +1,75 @@
+#!/bin/bash
+################################################################################
+# (c) Copyright 2007-2011 Alces Software Ltd                                   #
+#                                                                              #
+# HPC Cluster Toolkit                                                          #
+#                                                                              #
+# This file/package is part of the HPC Cluster Toolkit                         #
+#                                                                              #
+# This is free software: you can redistribute it and/or modify it under        #
+# the terms of the GNU Affero General Public License as published by the Free  #
+# Software Foundation, either version 3 of the License, or (at your option)    #
+# any later version.                                                           #
+#                                                                              #
+# This file is distributed in the hope that it will be useful, but WITHOUT     #
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        #
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License #
+# for more details.                                                            #
+#                                                                              #
+# You should have received a copy of the GNU Affero General Public License     #
+# along with this product.  If not, see <http://www.gnu.org/licenses/>.        #
+#                                                                              #
+# For more information on Alces Software, please visit:                        #
+# http://www.alces-software.org/                                               #
+#                                                                              #
+################################################################################
+# Script to check temperature reported by ganglia
+# Inlet temperature thresholds
+lowalert=35
+highalert=40
+nodename=$1
+
+# check nodename is set or abort
+if [ "$nodename" == "" ] ; then
+   nodefile=`cd /var/spool/nagios/ipmi-check ; ls`
+else
+   nodefile="$nodename.ipmi.out"
+fi
+
+good=0
+high=0
+critical=0
+unknown=0
+
+for file in `echo $nodefile`
+do
+   ## convert result to a decimal number
+   decval=`cat /var/spool/nagios/ipmi-check/$file 2> /dev/null | grep -i inlet | head -1 | awk '{print $8}' | cut -d. -f1`
+
+   # check if we have a value
+   if [ "$decval" == "" ] ; then
+      # No value reported for node
+      unknown=`expr $unknown + 1`
+   else
+
+      if [ $decval -ge $highalert ] ; then
+         critical=`expr $critical + 1`
+      elif [ $decval -ge $lowalert ] ; then
+         high=`expr $high + 1`
+      else
+         good=`expr $good + 1`
+      fi
+   fi
+done
+
+if [ $critical -gt 0 ] || [ $high -gt 0 ] ; then
+   echo "Temperature alert - $critical > ${highalert}C, $high > ${lowalert}C, $good OK"
+   exit 1
+elif [ $unknown -gt 0 ] ; then
+   echo "Temperature OK ($good OK, $unknown did not report)"
+   exit 0
+else
+   echo "Temperature OK on $good servers"
+   exit 0
+fi
+

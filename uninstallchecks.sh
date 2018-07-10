@@ -2,7 +2,9 @@
 
 # Uninstall checks
 
-config_file="nrds/nrds.cfg"
+#host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
+host_type="controller"
+config_file="nrds/client-configs/nrds.cfg"
 echo ${config_file}
 
 if [ ! -f ${config_file} ];
