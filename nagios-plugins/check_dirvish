@@ -1,0 +1,13 @@
+#!/bin/bash
+
+statusfile=/var/spool/nagios/dirvish.out
+
+if [ ! -f $statusfile ] ; then
+   echo "No dirivsh status file found"
+   exit 0
+fi
+
+exitstatus=`tail -1 $statusfile`
+
+head -n 1 $statusfile
+exit $exitstatus

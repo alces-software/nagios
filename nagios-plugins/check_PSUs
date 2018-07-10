@@ -1,0 +1,73 @@
+#!/bin/bash
+################################################################################
+# (c) Copyright 2007-2011 Alces Software Ltd                                   #
+#                                                                              #
+# HPC Cluster Toolkit                                                          #
+#                                                                              #
+# This file/package is part of the HPC Cluster Toolkit                         #
+#                                                                              #
+# This is free software: you can redistribute it and/or modify it under        #
+# the terms of the GNU Affero General Public License as published by the Free  #
+# Software Foundation, either version 3 of the License, or (at your option)    #
+# any later version.                                                           #
+#                                                                              #
+# This file is distributed in the hope that it will be useful, but WITHOUT     #
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        #
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License #
+# for more details.                                                            #
+#                                                                              #
+# You should have received a copy of the GNU Affero General Public License     #
+# along with this product.  If not, see <http://www.gnu.org/licenses/>.        #
+#                                                                              #
+# For more information on Alces Software, please visit:                        #
+# http://www.alces-software.org/                                               #
+#                                                                              #
+################################################################################
+
+# Script to check the status of redundant PSUs using the ipmi-sensors command
+
+# check we have output for this node
+if [ ! -x /usr/bin/ipmitool ] ; then
+   echo "No ipmitool utility installed"
+   exit 3
+fi
+
+checkcommand=/tmp/psucheck.$$
+
+# the command to run to check the service
+sudo /usr/bin/ipmitool sensor | egrep "Power Supplies|PS Redundancy|PG FAIL" > $checkcommand 2>&1
+
+if [ `cat $checkcommand | egrep -c "Fully Redundant|OK|Ok" | awk '{print $1}'` -lt 1 ] ; then
+
+   if [ `grep "PG FAIL" $checkcommand | grep -v "0x0180" | wc -l | awk '{print $1}'` -gt 0 ] ; then
+           echo "PSU PG FAIL detected"
+           rm -f $checkcommand
+           exit 1
+   else
+          echo "No PSU faults detected"
+          rm -f $checkcommand
+          exit 0
+   fi
+
+   # Cant find a redundancy flag for this server
+   # Some chassis based servers only list the number of PSUs and a status for each, so check that too
+   totalpsus=`grep PS $checkcommand | grep -c Output | awk '{print $1}'`
+   okpsus=`grep PS $checkcommand | grep Output | grep -c OK | awk '{print $1}'`
+   if [ $totalpsus -gt 0 ] ; then
+     if [ $okpsus -lt $totalpsus ] ; then
+        echo "PSU redundancy problem: $okpsus working PSU(s) of $totalpsus"
+        exit 1
+     else
+        echo "PSU redundancy okay ($okpsus PSU(s) report OK)"
+        exit 0
+     fi
+   fi
+   echo "PSU redundancy problem: `tail -1 $checkcommand | cut -d\| -f4 | awk '{print $1}'`"
+   rm -f $checkcommand
+   exit 1
+else
+   echo "PSU redundancy ok"
+   rm -f $checkcommand
+   exit 0
+fi
+

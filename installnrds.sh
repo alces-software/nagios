@@ -99,7 +99,10 @@ else
     groupadd ${group}
 fi
 
+# What type of node is this?
 
+# host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]"`
+host_type="controller"
 
 # Checking Config File for send_dir, directory that contains the script
 # that will be used to send the data to the NRDP server.
@@ -107,7 +110,7 @@ fi
 
 # Check for config file
 
-config_file="nrds/nrds.cfg"
+config_file="nrds/client-configs/${host_type}/nrds.cfg"
 printf "${config_file}\n"
 
 if [ ! -f ${config_file} ];
@@ -152,8 +155,13 @@ then
     printf "Error! Unable to copy send_nrds.sh into install directory.\n"
 fi
 
-# Copying the nrds directory which contains the perl scripts in to the install directory
-cp -R nrds ${installdir}
+# This needs modifying to copy the correct config.
+
+# Copy the appropriate config in to the install directory.
+cp nrds/client-configs/nrds.cfg ${installdir}/nrds.cfg
+
+# Copy .pl scripts in to the install directory.
+cp nrds/*.pl ${installdir}
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy nrds directory and it's contents into the install directory.\n"
