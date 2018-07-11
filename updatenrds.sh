@@ -43,7 +43,7 @@ else
 
 	# Replace the installed config with the updated config.
 
-	cp ${nagios_dir}/nrds/client-configs/${host_type}/nrds.cfg {installdir}/nrds.cfg
+	cp ${nagios_dir}/nrds/client-configs/${host_type}/nrds.cfg ${installdir}/nrds.cfg
 	rc=$?
 	if [ ${rc} -ne 0 ]; then
 	    echo "Error! Unable to Update new config!"
