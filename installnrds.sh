@@ -157,16 +157,32 @@ fi
 
 # This needs modifying to copy the correct config.
 
-# Copy the appropriate config in to the install directory.
-cp nrds/client-configs/nrds.cfg ${installdir}/nrds.cfg
 
-# Copy .pl scripts in to the install directory.
-cp nrds/*.pl ${installdir}
+# Copy nrds directory in to the  install directory.
+mkdir ${installdir}/nrds 
 if [ $? -ne 0 ];
 then
-    printf "Error! Unable to copy nrds directory and it's contents into the install directory.\n"
+    printf "Error! Unable to create nrds directory in ${installdir}!\n"
 else
-    printf "Success! nrds directory and perl scripts copied into the install directory.\n"
+    printf "Success! nrds directory created!\n"
+fi
+
+# Copy PERL scripts into ${installdir}/nrds directory
+cp nrds/*.pl ${installdir}/nrds
+if [ $? -ne 0 ];
+then
+    printf "Error! Unable to copy perl scripts!\n"
+else
+    printf "Success! Perl scripts copied to: ${installdir}/nrds\n"
+fi
+
+# Copy the appropriate config in to the install directory.
+cp nrds/client-configs/${host_type}/nrds.cfg ${installdir}/nrds/nrds.cfg
+if [ $? -ne 0 ] ;
+then
+    printf "Error! Unable to copy the correct config in to: ${installdir}/nrds\n"
+else
+    printf "Success! nrds.cfg copied to $installdir/nrds"
 fi
 
 #

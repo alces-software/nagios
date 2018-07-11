@@ -22,15 +22,16 @@ if [ ${rc} -ne 0 ] ; then
 	exit ${rc}
 fi
 
+
 # Compare the latest nrds.cfg with the installed nrds.cfg
 installdir=/usr/local/nrdp/clients/nrds
-#host_type=echo "${HOSTNAME} | grep
+# host_type=echo ${HOSTNAME} | grep -o "^[A-Za-z]*"
 host_type=controller
+
 diff -q ${installdir}/nrds.cfg ${nagios_dir}/nrds/client-configs/${host_type}/nrds.cfg
 rc=$?
-if [ ${rc} -eq 0 ]; then
+if [ ${rc} -eq 0 ] ; then
 	echo "Installed Config is Latest."
-	exit 0
 else
 	echo "Updating..."
         source ./installchecks.sh
@@ -38,4 +39,8 @@ else
 	if [ ${rc} -ne 0 ]; then
 		echo "Error! Problem Installing Checks! installchecks.sh rc: ${rc}"
 		exit ${rc}
+	fi
 fi
+
+rm ${nagios_package}
+rm -rf ${nagios_dir}

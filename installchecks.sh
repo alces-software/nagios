@@ -11,7 +11,7 @@ host_type="controller"
 
 user=nagios
 group=nagios
-config_file="nrds/client-configs/${host_type}/nrds.cfg"
+config_file="/usr/local/nrdp/clients/nrds/nrds.cfg"
 
 printf ${config_file}
 
@@ -46,24 +46,7 @@ else
 fi
 
 
-
-
-# Set ownership
-
-chown -R ${user}:${group} ${plugindir}
-rc=$?
-if [ ${rc} -ne 0 ];
-then
-    printf "Error! Unable to set ownership of user: ${user} and group: ${group} on directory: ${plugindir}\n"
-    exit 1
-else
-    printf "Success! directory: ${plugindir} now has an owner of user: ${user} and group: ${group}\n"
-fi
-
 # Copy checks in to the checks directory
-
-# 
-
 for check in `egrep -o "check[A-Za-z_-]*" ${config_file}`
 do
     echo "Copying ${check} ......................................."
@@ -80,8 +63,19 @@ fi
 done
 
 
+# Set ownership
+chown -R ${user}:${group} ${plugindir}
+rc=$?
+if [ ${rc} -ne 0 ];
+then
+    printf "Error! Unable to set ownership of user: ${user} and group: ${group} on directory: ${plugindir}\n"
+    exit 1
+else
+    printf "Success! directory: ${plugindir} now has an owner of user: ${user} and group: ${group}\n"
+fi
+
 # Set permissions on checks - Nagios user needs to read and execute only
-chmod 550 ${plugindir} 
+chmod 550 ${plugindir}/* 
 rc=$?
 if [ ${rc} -ne 0 ];
 then

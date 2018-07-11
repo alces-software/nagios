@@ -4,7 +4,7 @@
 
 #host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
 host_type="controller"
-config_file="nrds/client-configs/nrds.cfg"
+config_file="/usr/local/nrdp/clients/nrds/nrds.cfg"
 echo ${config_file}
 
 if [ ! -f ${config_file} ];
