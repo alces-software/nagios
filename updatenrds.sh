@@ -1,5 +1,10 @@
 #!/bin/bash
 
+cleanup () {
+    rm ${nagios_package}
+    rm -rf ${nagios_dir}
+}
+
 # installation should always be /usr/local/nrdp/clients/nrds/nrdp.cfg
 
 # download the latest package
@@ -32,15 +37,24 @@ diff -q ${installdir}/nrds.cfg ${nagios_dir}/nrds/client-configs/${host_type}/nr
 rc=$?
 if [ ${rc} -eq 0 ] ; then
 	echo "Installed Config is Latest."
+	cleanup
 else
 	echo "Updating..."
+
+	# Replace the installed config with the updated config.
+
+	cp ${nagios_dir}/nrds/client-configs/${host_type}/nrds.cfg {installdir}/nrds.cfg
+	rc=$?
+	if [ ${rc} -ne 0 ]; then
+	    echo "Error! Unable to Update new config!"
+	    exit ${rc}
+        fi
+
         source ./installchecks.sh
 	rc=$?
 	if [ ${rc} -ne 0 ]; then
 		echo "Error! Problem Installing Checks! installchecks.sh rc: ${rc}"
+		cleanup
 		exit ${rc}
 	fi
 fi
-
-rm ${nagios_package}
-rm -rf ${nagios_dir}

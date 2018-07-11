@@ -332,15 +332,7 @@ This will place the service checks in the correct location on the host to be mon
 **************************************************************************************************************************************************************************************
 **************************************************************************************************************************************************************************************
 
-2. Download the latest version of the installation package:
-
-    # wget https://github.com/alces-software/nagios/archive/master.zip
-    
-3. Extract the tarball:
-
-    # unzip master.tgz
-    
-4. Run the nrdp-updater.sh script. This script will do the following
+2. Run the nrdp-updater.sh script. This script will do the following
 
     1) Compare the the latest nrds.cfg with the installed nrds.cfg.
     2) If they differ, the latest nrds.cfg config file will replace the installed nrds.cfg, it will then run the installchecks.sh script.
@@ -352,6 +344,9 @@ This will place the service checks in the correct location on the host to be mon
 ********************************************************************************************************************************************************************************************************
 Note: If a check is not present where it should be, then or message me (Ross) on slack : INADEQUATE SOLUTION, availablility of all plugins being worked on...unless one does not exist and needs to be written.
 ********************************************************************************************************************************************************************************************************
+
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
 
 3. Log back in to the machine to be added to monitoring and set permissions and ownership on /usr/local/nagios/libexec/*
 
@@ -379,6 +374,9 @@ Example: Add the check for mounted file systems, which will check that a fs is m
 ------------------------------------------------------------------------------------------------------------
 command[check_ismounted]=/usr/local/nagios/libexec/check_ismounted /users
 ------------------------------------------------------------------------------------------------------------
+
+**************************************************************************************************************************************************************************************
+**************************************************************************************************************************************************************************************
 
 <WIP>
 *********************************************************************************************************************************************************************************************************
