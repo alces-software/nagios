@@ -1,0 +1,17 @@
+#!/bin/bash -l
+
+# Nagios plugin to check filesystem is mounted using mtab
+fs=$1
+
+if [ "$fs" == "" ] ; then
+   echo "No filesystem passed to check"
+   exit 3
+fi
+
+if [ `grep -c $fs /etc/mtab` -lt 1 ] ; then
+   echo "Filesystem $fs not mounted"
+   exit 1
+else
+   echo "Filesystem $fs mounted"
+   exit 0
+fi

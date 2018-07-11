@@ -161,15 +161,16 @@ Preconditions:
 
 1. Login to flightcenter-nagios2 as root
 
-2. Change directory to /usr/local/nagios/etc/objects/<cluster-name>/hosts
+2. Create a new file:
 
-3. Copy one of the files for a host object definition
+    # /usr/local/nagios/etc/objects
 
-    # cp <hostname>.<cluster>.cfg <new hostname>.<cluster>.cfg
+    # cp generic-cluster/hosts/node01.pri.CLUSTER.cfg <cluster>/hosts/node.pri.<cluster>.cfg 
     
 4. Edit the host name in the object definition:
 
-    # sed -i 's/<hostname>/<new hostname>/g' <new hostname>.cfg
+    # cd <cluster>/hosts/
+    # sed -i 's/<cluster>/<cluster>/g' <hostname>.pri.<cluster>.cfg
     
 5. Add new host to the hostgroup object that represents <cluster>:
 
@@ -190,7 +191,7 @@ Example:
     
 7. Restart the Nagios Service:
 
-    # systemctl restart nagios 
+    # systemctl restart nagios && tail -f /usr/local/nagios/var/nagios.log
     
 Login to the Nagios UI on https://flightcenter-nagios2.alces-flight.com/nagios and confirm that the new host is visible under the 'Host Groups' section on the navigation menu.
     
@@ -204,11 +205,11 @@ You will then be able to see the new Host in the UI, under the list of hosts, wi
 
 2. Download latest version of the installation package:
 
-    # wget https://github.com/alces-software/nagios/archive/master.zip
+    # wget https://github.com/alces-software/nagios/archive/master.tar.gz
     
 3. Extract the tarball:
 
-    # unzip master.tgz
+    # tar xzvf master.tgz
     
 4. Install the nrds client:
 
@@ -452,15 +453,6 @@ Add the two lines:
     
     below the # password mypassword sample entry (commented out)
     
-    
-4.2.2 Verify The Script Runs Correctly
---------------------------------------
-
-# ./alces-ipmi-check
-
-Check that: 
-1) /var/spool/nagios/ecc-check appears and contains files: <host>.ecc.out and each of these files has correct content.
-2) /var/spool/nagios/ipmi-check appears and contains files <host>.ipmi.out and each of these files has the correct content.
 
 4.2.3. Add the script to retrieve IPMI sensor output
 ----------------------------------------------------
@@ -493,7 +485,14 @@ done
 # remove files for login nodes
 rm -f /var/spool/nagios/ecc-check/login* /var/spool/nagios/ipmi-check/login*
 
+4.2.2 Verify The Script Runs Correctly
+--------------------------------------
 
+# ./alces-ipmi-check
+
+Check that: 
+1) /var/spool/nagios/ecc-check appears and contains files: <host>.ecc.out and each of these files has correct content.
+2) /var/spool/nagios/ipmi-check appears and contains files <host>.ipmi.out and each of these files has the correct content.
 
 4.2.3 Verify Nagios Check Operations
 ------------------------------------
