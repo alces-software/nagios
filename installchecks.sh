@@ -7,7 +7,6 @@
 # Create a directory to place the checks in.
 
 host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
-host_type="controller"
 
 user=nagios
 group=nagios

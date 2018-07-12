@@ -163,27 +163,33 @@ Preconditions:
 
 2. Create a new file:
 
-    # /usr/local/nagios/etc/objects
+    # cd /usr/local/nagios/etc/objects
 
-    # cp generic-cluster/hosts/node01.pri.CLUSTER.cfg <cluster>/hosts/node.pri.<cluster>.cfg 
+    # cp generic-cluster/hosts/node01.pri.CLUSTER.cfg <cluster>/hosts/<host>.<cluster>.cfg 
     
 4. Edit the host name in the object definition:
 
     # cd <cluster>/hosts/
-    # sed -i 's/<cluster>/<cluster>/g' <hostname>.pri.<cluster>.cfg
-    
+    # sed -i 's#\(host_name.*\)#\<host>.<cluster>#g' <host>.<cluster>.cfg
+
+**************************************************************************************
+Example: Updating the host_name directive
+**************************************************************************************
+# sed -i 's#\(host_name.*\)#\1node781.pri.csf3#g' node781.pri.csf3.cfg
+**************************************************************************************
+
 5. Add new host to the hostgroup object that represents <cluster>:
 
     # cd /usr/local/nagios/etc/objects/<cluster> 
     
 Don't forget to escape the "." (dot) characters:
 
-    # sed -i 's/\([[:space:]]members.*\)/\1, <new hostname>/g' <cluster>-hostgroup.cfg
+    # sed -i 's/\(members.*\)/\1, <host>.<cluster>/g' <cluster>-hostgroup.cfg
 
 **************************************************************************************
 Example:
 **************************************************************************************
-# sed -i 's/\([[:space:]]members.*\)/\1, node05\.pri\.laplace/g' laplace-hostgroup.cfg
+# sed -i 's/\(members.*\)/\1, node05.pri.laplace/g' laplace-hostgroup.cfg
 ***************************************************************************************
 6. Run a sanity check on the Nagios Configuration to ensure the syntax and structure is valid:
 
@@ -209,7 +215,7 @@ You will then be able to see the new Host in the UI, under the list of hosts, wi
     
 3. Extract the tarball:
 
-    # tar xzvf master.tgz
+    # tar xzvf master.tar.gz
     
 4. Install the nrds client:
 
@@ -217,7 +223,7 @@ You will then be able to see the new Host in the UI, under the list of hosts, wi
 
 Run the following command:
     
-    # ./installnrds <hostname> <interval>
+    # ./installnrds.sh <hostname> <interval>
     
 5. Install the Client side checks: (this will contain the check_ping command only for the moment and is used as a host check).
 
@@ -287,10 +293,10 @@ Example: Creates a new service object definition file for a controller on Laplac
     # cp generic-cluster/services/controller-services.cfg laplace/services/controller-services.cfg
 ----------------------------------------------------------------------------------------------------------------------
     
-3. Update the host_name directive in the NEW file just created:
+3. Update the host_name directive in the NEW file just created: *WHAT IF THE NODE NUMBER IS DIFFERENT E.G. NODE780*e
 
     # cd <cluster>/services
-    # sed -i 's/\<cluster\>/<cluster>/g' <hostname>-services.cfg
+    # sed -i 's/<cluster>/<cluster>/g' <hostname>-services.cfg
 
 **************************************************************************************************************************************************************************************
 **************************************************************************************************************************************************************************************
@@ -548,14 +554,8 @@ Set ownership and permissions:
     # chown nagios:nagios *
     # chmod 550 *
 
-*********************************************************************************************************************************************************************************************************
-*********************************************************************************************************************************************************************************************************
-*********************************************************************************************************************************************************************************************************
-
-</WIP>
-
-5. Troubleshooting <WIP>
----------------
+5. Troubleshooting
+------------------
 
 Useful information can be found from the following:
 

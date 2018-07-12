@@ -101,8 +101,7 @@ fi
 
 # What type of node is this?
 
-# host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]"`
-host_type="controller"
+host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
 
 # Checking Config File for send_dir, directory that contains the script
 # that will be used to send the data to the NRDP server.
