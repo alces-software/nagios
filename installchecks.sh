@@ -50,7 +50,7 @@ fi
 for check in `egrep -o "check[A-Za-z_-]*" ${config_file}`
 do
     echo "Copying ${check} ......................................."
-    cp nagios-plugins/${check} ${plugindir}
+    cp nagios-master/nagios-plugins/${check} ${plugindir}
     rc=$?
     if [ ${rc} -ne 0 ];
     then
