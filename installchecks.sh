@@ -2,7 +2,8 @@
 
 #
 # This script is used to install checks on the remote machine
-#
+# To do this, it uses config file that was installed from installnrds.sh script
+# 
 
 # Create a directory to place the checks in.
 

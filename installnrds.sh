@@ -109,7 +109,7 @@ host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
 
 # Check for config file
 
-config_file="nrds/client-configs/${host_type}/nrds.cfg"
+config_file="nagios-master/nrds/client-configs/${host_type}/nrds.cfg"
 printf "${config_file}\n"
 
 if [ ! -f ${config_file} ];
@@ -154,10 +154,6 @@ then
     printf "Error! Unable to copy send_nrds.sh into install directory.\n"
 fi
 
-# This needs modifying to copy the correct config.
-
-
-# Copy nrds directory in to the  install directory.
 mkdir ${installdir}/nrds 
 if [ $? -ne 0 ];
 then
@@ -167,7 +163,7 @@ else
 fi
 
 # Copy PERL scripts into ${installdir}/nrds directory
-cp nrds/*.pl ${installdir}/nrds
+cp nagios-master/nrds/*.pl ${installdir}/nrds
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy perl scripts!\n"
@@ -176,7 +172,7 @@ else
 fi
 
 # Copy the appropriate config in to the install directory.
-cp nrds/client-configs/${host_type}/nrds.cfg ${installdir}/nrds/nrds.cfg
+cp nagios-master/nrds/client-configs/${host_type}/nrds.cfg ${installdir}/nrds/nrds.cfg
 if [ $? -ne 0 ] ;
 then
     printf "Error! Unable to copy the correct config in to: ${installdir}/nrds\n"
