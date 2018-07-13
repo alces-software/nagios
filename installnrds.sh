@@ -148,7 +148,7 @@ fi
 
 # Copy files from this directory into the install directory
 
-cp  send_nrdp.sh ${installdir}
+cp  /nagios-master/send_nrdp.sh ${installdir}
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy send_nrds.sh into install directory.\n"
