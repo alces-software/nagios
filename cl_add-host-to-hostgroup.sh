@@ -1,13 +1,7 @@
 #!/bin/bash
 
-if [ -z ${1} ] || [ -z ${2} ]; then
-    echo "Usage: ${0} <host> <interval> (interval in minutes)"
-    echo " e.g.: ${0} node01.pri.laplace 3"
-    exit 1
-fi
-
-client_host=${1}
-interval=${2}
+nagioscheckhost=`hostname -f | sed -e s/.alces.network$//g`
+interval=3
 
 # download the latest package
 gitrepo=https://github.com/alces-software/nagios/archive/master.tar.gz
@@ -25,14 +19,16 @@ tar xvzf ${nagios_package}
 rc=$?
 if [ ${rc} -ne 0 ] ; then
         echo "Error! Could not extract package: ${nagios_package}! tar rc: ${rc}"
+	echo "Removing ${nagios_package}...."
+	rm -f ${nagios_package}
         exit ${rc}
 fi
 
 # Run the nrds installer
-source ${nagios_dir}/installnrds.sh ${client_host} ${interval}
+source ${nagios_dir}/installnrds.sh ${nagioscheckhost} ${interval}
 rc=$?
 if [ ${rc} -ne 0 ]; then
-        echo "Error! Problem with nrds installation on ${HOSTNAME}. Error encounting while running installnrds.sh"
+        echo "Error! Problem with nrds installation on ${nagiocheckhost}. Error encounting while running installnrds.sh"
         exit ${rc}
 fi
 
