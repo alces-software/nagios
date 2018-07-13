@@ -99,9 +99,13 @@ else
     groupadd ${group}
 fi
 
-# What type of node is this?
+# determine host type
 
-host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
+host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
+
+if [ ${host_type} == "infra02"]; then
+	host_type="slurmaster"
+fi
 
 # Checking Config File for send_dir, directory that contains the script
 # that will be used to send the data to the NRDP server.
