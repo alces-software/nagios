@@ -103,7 +103,7 @@ fi
 
 host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
-if [ ${host_type} == "infra02"]; then
+if [ ${host_type} == "infra02" ]; then
 	host_type="slurmaster"
 fi
 
