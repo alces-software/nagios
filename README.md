@@ -1,40 +1,25 @@
-Instructions
--------------
+Install NRDS Clients and Nagios Check Scripts
+---------------------------------------------
 
-Install NRDS Clients on Machines to be Monitored
-------------------------------------------------
+Downloads and runs shell script from the Nagios repository, that adds the client side monitoring checks necessary for passive Nagios checks. Once this installation takes place on a node or set of nodes, data will be transfered every three minutes from the given node to the Nagios server: flightcenter-nagios2.
 
-1. If not already installed, install wget:
+1. Log in to the controller.
 
-    yum -y install wget
-    
 2. Download NRDP Client Installation files:
 
-    wget https://github.com/alces-software/nagios/archive/master.zip
-    
-3. Extract the tarball:
+If monitoring a cluster CONTROLLER, run the following command:
 
-    unzip master.zip
-    
-4. Install the nrds client:
+    curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash
 
-Run the following command:
+If monitoring a machine other than a controller, run the following command:
 
-    cd nagios-master
-    
-    ./installnrds <hostname> <interval>
-    
-----------------------------------------------------------------------------------------------------------------------
-Example: Install NRDS clients onto the LAPLACE cluster CONTROLLER, with checks that will be run at 3 minute intervals:
-----------------------------------------------------------------------------------------------------------------------
-    ./installnrds controller.pri.laplace 3 
-----------------------------------------------------------------------------------------------------------------------
-    
-5. Install the Client side checks: (this will contain the check_ping command only for the moment).
+    pdsh -w <hostname(s)> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
+ 
+ Where hostnames refers to the set of machines to be monitored, using the standard syntax used for pdsh.
+ 
+Example: Installing checks on a set of compute nodes:
 
-    ./installchecks.sh
-    
-Installation of the NRDP Client on the remote machine is now complete.
+    pdsh -w node[922-926] 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
 
 
 Contents
