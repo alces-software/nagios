@@ -1,5 +1,5 @@
-Install NRDS Clients on Machines to be Monitored
-------------------------------------------------
+Install NRDS Clients and Nagios Check Scripts
+---------------------------------------------
 
 Downloads and runs shell script from the Nagios repository, that adds the client side monitoring checks necessary for passive Nagios checks. Once this installation takes place on a node or set of nodes, data will be transfered every three minutes from the given node to the Nagios server: flightcenter-nagios2.
 
