@@ -9,11 +9,11 @@ Downloads and runs shell script from the Nagios repository, that adds the client
 
 If monitoring a cluster CONTROLLER, run the following command:
 
-curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash
+    curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash
 
 If monitoring a machine other than a controller, run the following command:
 
- pdsh -w <hostname(s)> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
+    pdsh -w <hostname(s)> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
  
  Where hostnames refers to the set of machines to be monitored, using the standard syntax used for pdsh.
  
