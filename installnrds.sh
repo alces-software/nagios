@@ -103,9 +103,40 @@ fi
 
 host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
-if [ ${host_type} == "infra02" ]; then
-	host_type="slurmaster"
-fi
+# Here, the install script determines which config to install based on the short hostname of the machine 
+
+declare -a profiles
+declare -a machines
+
+profiles=(
+    'backup'
+    'basic'
+    'controller'
+    'login'
+    'masters'
+    'nodes'
+    'slurmaster'
+    )
+
+machines=(
+    'master1'
+    'admin01,admin02,infra01'
+    'controller'
+    'login1'
+    'master1,master2'
+    'node'
+    'infra02'
+    )
+
+counter=0
+while [ ${counter} -le 7 ]
+    if [ `echo "${machines[counter]}" | grep -ci ${host_type}` -eq "1" ]; then
+        host_type="${profiles[counter]}"
+	break
+    else
+	((counter + 1))
+    fi
+exit 0
 
 # Checking Config File for send_dir, directory that contains the script
 # that will be used to send the data to the NRDP server.

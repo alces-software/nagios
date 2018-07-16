@@ -47,21 +47,17 @@ Host Group objects are used to represent clusters in Nagios.
 
     # chown -R nagios:nagios /usr/local/nagios/etc/objects/<cluster>
 
-4. Create a new config file named <cluster>-hostgroup.cfg
+4. Create a new config file named <cluster>-hostgroup.cfg, by copying the cluster hostgroup object definition file:
 
-    # cd /usr/local/nagios/etc/objects/<cluster>
-    # vi <cluster>-hostgroup.cfg
+    # cp /usr/local/nagios/etc/objects/generic-cluster/CLUSTER-hostgroup.cfg /usr/local/nagios/etc/objects/<cluster>
+    
+5. Replace the <cluster> placeholders in the new file with suitable values:
 
-5. Paste the following hostgroup object definition into the file:
+    # sed -i 's/<cluster>/<cluster>/g' <cluster>-hostgroup.cfg
+    
+Example: Replace placeholders in a new Cluster's hostgroup object definition file with the cluster's details:
 
-
-define hostgroup{
-        hostgroup_name  <cluster> ; The name of the hostgroup/group
-        alias           <cluster> Hostgroup ; Long name of the group
-        members         controller.pri.<clustername>  ; Each cluster has a controller member, so feel free to paste this in.
-}
-
-Save and close.
+    # sed -i 's/<cluster>/hamilton/g' hamilton-hostgroup.cfg
 
 1.2. Create a Host Object Definition for the Controller
 -------------------------------------------------------
@@ -73,18 +69,13 @@ The controller will be the initial member of the host group.
     # mkdir /usr/local/nagios/etc/objects/<cluster>/hosts
     # cd /usr/local/nagios/etc/objects/<cluster>/hosts
     
-2. Create a file named: controller.pri.<cluster>.cfg:
+2. Copy the generic controller host definition file:
 
-    # vi controller.pri.<cluster>.cfg
+    # cp /usr/local/nagios/etc/objects/generic-cluster/hosts/controller.pri.CLUSTER.cfg /usr/local/nagios/etc/objects/<cluster>/hosts/controller.pri.<cluster>
 
-3. Paste the following host object definition into the file:
-
-define host {
-    use            passive_host
-    host_name      controller.pri.<cluster>
-}
-
-Save and close.
+3. Replace the placeholders for the new controller object's details:
+    
+    # sed -i 's/<cluster>/<cluster>/g' /usr/local/nagios/etc/objects/<cluster>/hosts/controller.pri.<cluster>
 
 1.3 Update Nagios Service Configuration
 ---------------------------------------
