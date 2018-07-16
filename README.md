@@ -1,7 +1,7 @@
 Install NRDS Clients on Machines to be Monitored
 ------------------------------------------------
 
-Downloads and runs shell script from the Nagios repository, that adds the client side monitoring checks necessary for passive Nagios checks.
+Downloads and runs shell script from the Nagios repository, that adds the client side monitoring checks necessary for passive Nagios checks. Once this installation takes place on a node or set of nodes, data will be transfered every three minutes from the given node to the Nagios server: flightcenter-nagios2.
 
 1. Log in to the controller.
 
@@ -17,14 +17,9 @@ If monitoring a machine other than a controller, run the following command:
  
  Where hostnames refers to the set of machines to be monitored, using the standard syntax used for pdsh.
  
-----------------------------------------------------------------------------------------------------------------------
-Example: Install NRDS and Nagios Checks on Compute nodes 922
-----------------------------------------------------------------------------------------------------------------------
+Example: Installing checks on a set of compute nodes:
+
     pdsh -w node[922-926] 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
-----------------------------------------------------------------------------------------------------------------------
- 
-    
-Installation of the NRDP Client on the remote machine is now complete.
 
 
 Contents
