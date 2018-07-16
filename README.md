@@ -1,38 +1,28 @@
-Instructions
--------------
-
 Install NRDS Clients on Machines to be Monitored
 ------------------------------------------------
 
-1. If not already installed, install wget:
+Downloads and runs shell script from the Nagios repository, that adds the client side monitoring checks necessary for passive Nagios checks.
 
-    yum -y install wget
-    
+1. Log in to the controller.
+
 2. Download NRDP Client Installation files:
 
-    wget https://github.com/alces-software/nagios/archive/master.zip
-    
-3. Extract the tarball:
+If monitoring a cluster CONTROLLER, run the following command:
 
-    unzip master.zip
-    
-4. Install the nrds client:
+curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash
 
-Run the following command:
+If monitoring a machine other than a controller, run the following command:
 
-    cd nagios-master
-    
-    ./installnrds <hostname> <interval>
-    
+ pdsh -w <hostname(s)> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
+ 
+ Where hostnames refers to the set of machines to be monitored, using the standard syntax used for pdsh.
+ 
 ----------------------------------------------------------------------------------------------------------------------
-Example: Install NRDS clients onto the LAPLACE cluster CONTROLLER, with checks that will be run at 3 minute intervals:
+Example: Install NRDS and Nagios Checks on Compute nodes 922
 ----------------------------------------------------------------------------------------------------------------------
-    ./installnrds controller.pri.laplace 3 
+    pdsh -w node[922-926] 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash'
 ----------------------------------------------------------------------------------------------------------------------
-    
-5. Install the Client side checks: (this will contain the check_ping command only for the moment).
-
-    ./installchecks.sh
+ 
     
 Installation of the NRDP Client on the remote machine is now complete.
 
