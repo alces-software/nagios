@@ -1,13 +1,10 @@
 #!/bin/bash
 
 #
-# This script is used to install checks on the remote machine
-# To do this, it uses config file that was installed from installnrds.sh script
+# Installs nagios plugins on remote machines
 # 
 
 # Create a directory to place the checks in.
-
-host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z]*"`
 
 user=nagios
 group=nagios
@@ -45,12 +42,14 @@ else
     printf "Checks directory already exists...\n"
 fi
 
+# If a check is defined twice for a config file, the check will actually get copied twice 
+# (this isn't really a problem...)
 
 # Copy checks in to the checks directory
-for check in `egrep -o "check[A-Za-z_-]*" ${config_file}`
+for check in `egrep -o "check[A-Za-z0-9_-]*" ${config_file}`
 do
     echo "Copying ${check} ......................................."
-    cp nagios-master/nagios-plugins/${check} ${plugindir}
+    cp nagios-plugins/${check} ${plugindir}
     rc=$?
     if [ ${rc} -ne 0 ];
     then

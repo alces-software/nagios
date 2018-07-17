@@ -1,3 +1,5 @@
+*/3 * * * * /usr/local/nrdp/clients/nrds/nrds.pl -H 'controller.hamilton' > /dev/null 2>&1
+
 Nagios - Cluster and Host Monitoring Configuration
 --------------------------------------------------
 
@@ -567,7 +569,7 @@ Options:
         -o     output
 
 
-./send_nrdp.sh -u http://10.78.0.30/nrdp -t RrpjfuGiOOb5 -H controller.pri.csf3 -s "Check Load" -S1 -o "Premigration test!
+./send_nrdp.sh -u http://10.78.0.30/nrdp -t RrpjfuGiOOb5 -H controller.pri.csf3 -s "Check Load" -S1 -o "Premigration test!"
 ./send_nrdp.sh -u http://10.78.0.31/nrdp -t 90t3s7t0k3n90 -H controller.pri.csf3 -s "Check Load" -S1 -o "Premigration test!
 
 This will force the Check Load service monitor in to a HARD WARNING state. Recovery (OK), will lead it back in to a HARD OK state.

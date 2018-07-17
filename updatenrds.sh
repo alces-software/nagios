@@ -27,13 +27,48 @@ if [ ${rc} -ne 0 ] ; then
 	exit ${rc}
 fi
 
+short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
+
+# Here, the install script determines which config to install based on the short hostname of the machine
+# An element of the profiles array has an index which corresponds to the machine(s) in 'machines' array with regards to Nagios configuration requirements.
+
+declare -a nagios_profiles
+declare -a cluster_machines
+
+nagios_profiles=(
+    'backup'
+    'basic'
+    'controller'
+    'login'
+    'masters'
+    'nodes'
+    'slurmaster'
+    )
+
+cluster_machines=(
+    'master1'  
+    'admin01,admin02,infra01'
+    'controller'
+    'login1'
+    'master'
+    'node'
+    'infra02'
+    )
+
+counter=0
+while [ ${counter} -le "7" ]; do
+    if [ `echo "${short_hostname}" | grep -ci "${cluster_machines[counter]}"` -eq "1" ]; then
+        nagios_profile="${nagios_profiles[counter]}"
+        break
+    else
+        ((counter++))
+    fi
+done
 
 # Compare the latest nrds.cfg with the installed nrds.cfg
 installdir=/usr/local/nrdp/clients/nrds
-# host_type=echo ${HOSTNAME} | grep -o "^[A-Za-z]*"
-host_type=controller
 
-diff -q ${installdir}/nrds.cfg ${nagios_dir}/nrds/client-configs/${host_type}/nrds.cfg
+diff -q ${installdir}/nrds.cfg ${nagios_dir}/nrds/client-configs/${nagios_profile}/nrds.cfg
 rc=$?
 if [ ${rc} -eq 0 ] ; then
 	echo "Installed Config is Latest."
@@ -43,7 +78,7 @@ else
 
 	# Replace the installed config with the updated config.
 
-	cp ${nagios_dir}/nrds/client-configs/${host_type}/nrds.cfg ${installdir}/nrds.cfg
+	cp ${nagios_dir}/nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds.cfg
 	rc=$?
 	if [ ${rc} -ne 0 ]; then
 	    echo "Error! Unable to Update new config!"

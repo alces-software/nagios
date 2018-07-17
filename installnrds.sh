@@ -76,19 +76,16 @@ then
     printf "Success! curl installed.\n"
 fi
 
+short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
-# determine host type
+echo "Short Hostname: ${short_hostname}"
+# Here, the install script determines which config to install based on the short hostname of the machine
+# An element of the profiles array has an index which corresponds to the machine(s) in 'machines' array with regards to Nagios configuration requirements.
 
-# host_type=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
+declare -a nagios_profiles
+declare -a cluster_machines
 
-# Here, the install script determines which config to install based on the short hostname of the machine 
-
-declare -a profiles
-declare -a machines
-
-host_type="controller"
-
-profiles=(
+nagios_profiles=(
     'backup'
     'basic'
     'controller'
@@ -98,26 +95,40 @@ profiles=(
     'slurmaster'
     )
 
-machines=(
-    'master1'
+cluster_machines=(
+    'master1'  
     'admin01,admin02,infra01'
     'controller'
     'login1'
-    'master1,master2'
+    'master'
     'node'
     'infra02'
     )
 
 counter=0
-echo ${counter}
 while [ ${counter} -le "7" ]; do
-    if [ `echo "${machines[counter]}" | grep -ci ${host_type}` -eq "1" ]; then
-        host_type="${profiles[counter]}"
-	break
+    if [ `echo "${short_hostname}" | grep -ci "${cluster_machines[counter]}"` -eq "1" ]; then
+        nagios_profile="${nagios_profiles[counter]}"
+        break
     else
-	((counter++))
+        ((counter++))
     fi
 done
+echo "Counter is: ${counter}"
+echo "Nagios profile: ${nagios_profile}"
+
+
+# Check for config file
+
+config_file="nrds/client-configs/${nagios_profile}/nrds.cfg"
+
+if [ ! -f ${config_file} ];
+then
+    printf "Error: Config file: ${config_file} not found!\n"
+    exit
+else
+    printf "Success!: Config file ${config_file} found\n"
+fi
 
 printf "Adding User and Group...\n"
 
@@ -143,32 +154,13 @@ else
 fi
 
 
-# Checking Config File for send_dir, directory that contains the script
-# that will be used to send the data to the NRDP server.
-# This will be our installation directory for NRDS/NRDP clients
-
-# Check for config file
-
-config_file="nagios-master/nrds/client-configs/${host_type}/nrds.cfg"
-printf "${config_file}\n"
-
-if [ ! -f ${config_file} ];
-then
-    printf "Error: Config file: ${config_file} not found!\n"
-    exit
-else
-    printf "Success!: Config file ${config_file} found\n"
-fi
-
 installdir=`grep "^SEND_NRDP" ${config_file} |\
             sed -e 's/SEND_NRDP=//' |\
             sed -e 's/\"//g' |\
             sed -e 's/\/send_nrdp\.sh//'`
 
 printf ${installdir}
-
 mkdir -p ${installdir}
-
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to create installation directory: ${installdir}\n"
@@ -188,7 +180,7 @@ fi
 
 # Copy files from this directory into the install directory
 
-cp nagios-master/send_nrdp.sh ${installdir}
+cp send_nrdp.sh ${installdir}
 rc=$?
 if [ ${rc} -ne 0 ];
 then
@@ -204,7 +196,7 @@ else
 fi
 
 # Copy PERL scripts into ${installdir}/nrds directory
-cp nagios-master/nrds/*.pl ${installdir}/nrds
+cp nrds/*.pl ${installdir}/nrds
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy perl scripts!\n"
@@ -213,7 +205,7 @@ else
 fi
 
 # Copy the appropriate config in to the install directory.
-cp nagios-master/nrds/client-configs/${host_type}/nrds.cfg ${installdir}/nrds/nrds.cfg
+cp nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
 if [ $? -ne 0 ] ;
 then
     printf "Error! Unable to copy the correct config in to: ${installdir}/nrds\n"
@@ -254,4 +246,3 @@ if [ $? -ne 0 ];
 then
     printf "Error! Could not remove temporary file ${tmpfile}\n"
 fi
-
