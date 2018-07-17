@@ -46,7 +46,7 @@ fi
 # (this isn't really a problem...)
 
 # Copy checks in to the checks directory
-for check in `egrep -o "check[A-Za-z0-9_-]*" ${config_file}`
+for check in `egrep -o "check[A-Za-z0-9_.-]*" ${config_file}`
 do
     echo "Copying ${check} ......................................."
     cp nagios-master/nagios-plugins/${check} ${plugindir}
