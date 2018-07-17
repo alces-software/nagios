@@ -202,6 +202,9 @@ You will then be able to see the new Host in the UI, under the list of hosts, wi
 
 1. Log in to the host to be monitored.
 
+
+pdsh -w node[917-921] 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_add-host-to-hostgroup.sh | /bin/bash
+
 2. Download latest version of the installation package:
 
     # wget https://github.com/alces-software/nagios/archive/master.tar.gz

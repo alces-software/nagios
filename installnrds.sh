@@ -78,7 +78,12 @@ fi
 
 short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
-echo "Short Hostname: ${short_hostname}"
+#Nodes are an exception for this sort of thing. But an easy one at that.
+
+if [`echo ${short_hostname} | grep -ci "node"` -eq "1" ]; then
+	short_hostname="node"
+fi
+
 # Here, the install script determines which config to install based on the short hostname of the machine
 # An element of the profiles array has an index which corresponds to the machine(s) in 'machines' array with regards to Nagios configuration requirements.
 
@@ -96,18 +101,18 @@ nagios_profiles=(
     )
 
 cluster_machines=(
-    'master1'  
+    'backup01'  
     'admin01,admin02,infra01'
     'controller'
-    'login1'
-    'master'
+    'login1,login2'
+    'master1,master2'
     'node'
     'infra02'
     )
 
 counter=0
 while [ ${counter} -le "7" ]; do
-    if [ `echo "${short_hostname}" | grep -ci "${cluster_machines[counter]}"` -eq "1" ]; then
+    if [ `echo "${cluster_machines[counter]}" | egrep -ci "${short_hostname}"` -eq "1" ]; then
         nagios_profile="${nagios_profiles[counter]}"
         break
     else
