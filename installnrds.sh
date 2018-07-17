@@ -80,7 +80,7 @@ short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
 #Nodes are an exception for this sort of thing. But an easy one at that.
 
-if [`echo ${short_hostname} | grep -ci "node"` -eq "1" ]; then
+if [`echo "${short_hostname}" | grep -ci "node"` -eq "1" ]; then
 	short_hostname="node"
 fi
 
@@ -125,7 +125,7 @@ echo "Nagios profile: ${nagios_profile}"
 
 # Check for config file
 
-config_file="nrds/client-configs/${nagios_profile}/nrds.cfg"
+config_file="nagios-master/nrds/client-configs/${nagios_profile}/nrds.cfg"
 
 if [ ! -f ${config_file} ];
 then
@@ -180,7 +180,7 @@ fi
 
 # Copy files from this directory into the install directory
 
-cp send_nrdp.sh ${installdir}
+cp nagios-master/send_nrdp.sh ${installdir}
 rc=$?
 if [ ${rc} -ne 0 ];
 then
@@ -196,7 +196,7 @@ else
 fi
 
 # Copy PERL scripts into ${installdir}/nrds directory
-cp nrds/*.pl ${installdir}/nrds
+cp nagios-master/nrds/*.pl ${installdir}/nrds
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy perl scripts!\n"
@@ -205,7 +205,7 @@ else
 fi
 
 # Copy the appropriate config in to the install directory.
-cp nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
+cp nagios-master/nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
 if [ $? -ne 0 ] ;
 then
     printf "Error! Unable to copy the correct config in to: ${installdir}/nrds\n"
