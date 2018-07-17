@@ -80,7 +80,7 @@ short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
 #Nodes are an exception for this sort of thing. But an easy one at that.
 
-if [`echo ${short_hostname} | grep -ci "node"` -eq "1"` ]; then
+if [`echo ${short_hostname} | grep -ci "node"` -eq "1" ]; then
 	short_hostname="node"
 fi
 
@@ -158,13 +158,8 @@ else
     groupadd ${group}
 fi
 
+installdir=`grep "^SEND_NRDP" ${config_file} | sed -e 's/SEND_NRDP=//' | sed -e 's/\"//g' | sed -e 's/\/send_nrdp\.sh//'`
 
-installdir=`grep "^SEND_NRDP" ${config_file} |\
-            sed -e 's/SEND_NRDP=//' |\
-            sed -e 's/\"//g' |\
-            sed -e 's/\/send_nrdp\.sh//'`
-
-printf ${installdir}
 mkdir -p ${installdir}
 if [ $? -ne 0 ];
 then
