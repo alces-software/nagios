@@ -102,7 +102,7 @@ nagios_profiles=(
 
 cluster_machines=(
     'backup01'  
-    'admin01,admin02,infra01'
+    'admin01,admin02,infra01,infra03'
     'controller'
     'login1,login2'
     'master1,master2'
