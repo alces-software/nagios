@@ -46,15 +46,13 @@ fi
 # (this isn't really a problem...)
 
 # Copy checks in to the checks directory
-for check in `egrep -o "check[A-Za-z0-9_.-]*" ${config_file}`
-do
+for check in `egrep -o "check[A-Za-z0-9_.-]*" ${config_file}` do
     echo "Copying ${check} ......................................."
     cp nagios-master/nagios-plugins/${check} ${plugindir}
     rc=$?
     if [ ${rc} -ne 0 ];
     then
         printf "Error! Unable to copy check: ${check} into the target directory, aborting...\n"
-        exit ${rc}
     else
     printf "Success! Checks copied in to plugin directory ${plugindir}...\n"
 fi
@@ -83,3 +81,5 @@ then
 else
     printf "Success! Permissions set on the check files...\n"
 fi
+
+exit 0
