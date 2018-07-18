@@ -230,7 +230,7 @@ then
     printf "Error! Unable to create temporary file: ${tmpfile}\n"
 fi
 
-printf "*/${interval} * * * * ${installdir}/nrds/nrds.pl -H ${host}\n" >> ${tmpfile}
+printf "*/${interval} * * * * ${installdir}/nrds/nrds.pl -H ${host} > /dev/null 2>&1\n" >> ${tmpfile}
 
 crontab ${tmpfile} -u ${user}
 
