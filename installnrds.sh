@@ -80,7 +80,7 @@ short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
 #Nodes are an exception for this sort of thing. But an easy one at that.
 
-if [`echo "${short_hostname}" | grep -ci "node"` -eq "1" ]; then
+if [ `echo "${short_hostname}" | grep -ci "node"` -eq "1" ]; then
 	short_hostname="node"
 fi
 
