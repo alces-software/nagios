@@ -96,7 +96,11 @@ nagios_profiles=(
     'controller'
     'login'
     'masters'
+    'mds'
+    'nfs'
     'nodes'
+    'nodes-with-raid'
+    'oss'
     'slurmaster'
     )
 
@@ -106,7 +110,10 @@ cluster_machines=(
     'controller'
     'login1,login2'
     'master1,master2'
-    'node'
+    'mds1'
+    'nfs1,nfs2'
+    'node,gpu01,phi01,phi02,phi03,phi04'
+    'himem01,himem02,viz01,viz02'
     'infra02'
     )
 
