@@ -115,6 +115,7 @@ cluster_machines=(
     'nfs1,nfs2'
     'node,gpu01,phi01,phi02,phi03,phi04'
     'himem01,himem02,viz01,viz02'
+    'oss1,oss2'
     'infra02'
     )
 
