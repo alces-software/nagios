@@ -51,7 +51,7 @@ Host Group objects are used to represent clusters in Nagios.
 
 4. Create a new config file named <cluster>-hostgroup.cfg, by copying the cluster hostgroup object definition file:
 
-    # cp /usr/local/nagios/etc/objects/generic-cluster/CLUSTER-hostgroup.cfg /usr/local/nagios/etc/objects/<cluster>
+    # cp /usr/local/nagios/etc/objects/generic-cluster/CLUSTER-hostgroup.cfg /usr/local/nagios/etc/objects/<cluster>/<cluster>-hostgroup.cfg
     
 5. Replace the <cluster> placeholders in the new file with suitable values:
 
@@ -59,7 +59,7 @@ Host Group objects are used to represent clusters in Nagios.
     
 Example: Replace placeholders in a new Cluster's hostgroup object definition file with the cluster's details:
 
-    # sed -i 's/<cluster>/hamilton/g' hamilton-hostgroup.cfg
+    # sed -i 's/<cluster>/<cluster>/g' hamilton-hostgroup.cfg
 
 1.2. Create a Host Object Definition for the Controller
 -------------------------------------------------------

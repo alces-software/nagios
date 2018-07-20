@@ -89,6 +89,7 @@ fi
 
 declare -a nagios_profiles
 declare -a cluster_machines
+alces_nr_profiles=10
 
 nagios_profiles=(
     'backup'
@@ -118,7 +119,7 @@ cluster_machines=(
     )
 
 counter=0
-while [ ${counter} -le "7" ]; do
+while [ ${counter} -le "${alces_nr_profiles}" ]; do
     if [ `echo "${cluster_machines[counter]}" | egrep -ci "${short_hostname}"` -eq "1" ]; then
         nagios_profile="${nagios_profiles[counter]}"
         break
