@@ -11,7 +11,7 @@ cleanup () {
 gitrepo=https://github.com/alces-software/nagios/archive/master.tar.gz
 nagios_package=master.tar.gz
 
-nagios_dir=nagios-master
+nagios_dir=nagios-barkla
 
 wget ${gitrepo}
 rc=$?

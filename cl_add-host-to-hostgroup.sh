@@ -4,9 +4,9 @@ nagioscheckhost=`hostname -f | sed -e s/.alces.network$//g`
 interval=3
 
 # download the latest package
-gitrepo=https://github.com/alces-software/nagios/archive/master.tar.gz
-nagios_package=master.tar.gz
-nagios_dir=nagios-master
+gitrepo=https://github.com/alces-software/nagios/archive/barkla.tar.gz
+nagios_package=barkla.tar.gz
+nagios_dir=nagios-barkla
 
 wget ${gitrepo}
 rc=$?
