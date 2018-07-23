@@ -1,0 +1,21 @@
+#!/bin/bash
+# script to retrieve IPMI sensors output
+
+export PATH=/opt/metalware/opt/pdsh/bin:/opt/metalware/opt/genders/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
+
+[[ ! -x /opt/metalware/opt/genders/bin/nodeattr ]] && exit 0
+[[ ! -d /var/spool/nagios/ipmi-check ]] && mkdir -p /var/spool/nagios/ipmi-check && chown -R nagios /var/spool/nagios/ipmi-check
+[[ ! -d /var/spool/nagios/ecc-check ]] && mkdir -p /var/spool/nagios/ecc-check && chown -R nagios /var/spool/nagios/ecc-check
+
+. /etc/profile
+
+for node in `nodeattr -s compute` `nodeattr -s storage` master1 master2
+do
+   ipmi-sensors -f -D LAN_2_0 -h $node.bmc > /dev/null 2>&1
+   ipmi-sensors -D LAN_2_0 -h $node.bmc > /var/spool/nagios/ipmi-check/$node.ipmi.out 2>&1
+   ipmi-sel -D LAN_2_0 -h $node.bmc 2> /dev/null > /var/spool/nagios/ecc-check/$node.ecc.out 2>&1
+
+done
+
+# remove files for login nodes
+rm -f /var/spool/nagios/ecc-check/login* /var/spool/nagios/ipmi-check/login*
