@@ -10,4 +10,12 @@ fi
 exitstatus=`tail -1 $statusfile`
 
 head -n 1 $statusfile
+
+# We've checked...if things are OK, then set check_status to 0
+if [  ${exitstatus} -eq "0" ]; then
+    sed -ei 's/(check_dirvish_status=)1/\10/' ${checkstatusfile}
+    if [ $? -ne 0 ]
+        exit 1
+fi
+
 exit $exitstatus
