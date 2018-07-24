@@ -133,8 +133,9 @@ else
 fi
 
 # Copy files from this directory into the install directory
+nrds_installer_dir="nagios"
 
-cp nagios-master/send_nrdp.sh ${installdir}
+cp ${nrds_installer_dir}/send_nrdp.sh ${installdir}
 rc=$?
 if [ ${rc} -ne 0 ];
 then
@@ -150,7 +151,7 @@ else
 fi
 
 # Copy PERL scripts into ${installdir}/nrds directory
-cp nagios-master/nrds/*.pl ${installdir}/nrds
+cp ${nrds_installer_dir}/nrds/*.pl ${installdir}/nrds
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy perl scripts!\n"
@@ -159,7 +160,7 @@ else
 fi
 
 # Copy the appropriate config in to the install directory.
-cp nagios-master/nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
+cp ${nrds_installer_dir}/nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
 if [ $? -ne 0 ] ;
 then
     printf "Error! Unable to copy the correct config in to: ${installdir}/nrds\n"

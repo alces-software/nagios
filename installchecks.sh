@@ -45,11 +45,12 @@ fi
 # If a check is defined twice for a config file, the check will actually get copied twice 
 # (this isn't really a problem...)
 
+nrds_installer_dir="nagios"
 # Copy checks in to the checks directory
 for check in `egrep -o "check[A-Za-z0-9_.-]*" ${config_file}`
 do
     echo "Copying ${check} ......................................."
-    cp nagios-master/nagios-plugins/${check} ${plugindir}
+    cp ${nrds_installer_dir}/nagios-plugins/${check} ${plugindir}
     rc=$?
     if [ ${rc} -ne 0 ];
     then

@@ -43,6 +43,14 @@ if [ "${rc}" -ne "0" ]; then
     exit ${rc}
 fi
 
+# Run the plugins installer
+source ${nrds_installer_dir}/installchecks.sh
+rc=$?
+if [ ${rc} -ne 0 ]; then
+        echo "Error! Could not install nrds plugins!"
+        exit ${rc}
+fi
+
 echo "Cleaning up..."
 
 rm -rf nagios
