@@ -6,14 +6,17 @@ Nagios - Cluster and Host Monitoring Configuration
 Contents
 --------
 
+0. Nagios Configuration....................................................................................................................
+0.1 Overview...............................................................................................................................
+0.2 Redundant files........................................................................................................................
 1. Add a Cluster to Monitoring.............................................................................................................
 1.1. Create a New Host Group Object Definition.............................................................................................
 1.2. Create a New Host Object Definition...................................................................................................
 1.3. Update Nagios Service Main Configuration..............................................................................................
 1.4. Install NRDS Clients on Machines to be Monitored......................................................................................
-2. Adding a Host to Monitoring..........................................................................................................
-2.1. Adding a Host to Monitoring - Server Side Configuration.............................................................................
-2.2. Adding a Host to Monitoring - Client Side Configuration.............................................................................
+2. Adding a Host to Monitoring.............................................................................................................
+2.1. Adding a Host to Monitoring - Server Side Configuration...............................................................................
+2.2. Adding a Host to Monitoring - Client Side Configuration...............................................................................
 3. Adding Service Checks to Hosts..........................................................................................................
 3.1. Adding Service Checks to Hosts - Server Side Configuration............................................................................
 3.2. Adding Service Checks to Hosts - Client Side Configuration............................................................................
@@ -29,6 +32,104 @@ laplace or hamilton.
 Generally, configuration must be performed on client and server. Server configuration, is used by Nagios to process and display information it receives from clients correctly. Client configuration, species what checks to run and where to transfer the data.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+0. Nagios Configuration
+-----------------------
+
+0.1 Overview
+------------
+
+There exists, a set of profiles used by the clusters for nagios configuration. Some clusters, use a subset of these profiles. Also, any given profile used by one or more clusters, such as the nodes profile, will not be the same for these clusters.
+
+All files relating to Nagios NRDS client installations are stored in the Nagios Github repository. Its structure is as follows:
+
+.
+├── cl_add-host-to-hostgroup.sh
+├── cronjobs
+│   ├── alces-ipmi-check
+│   ├── check_dirvish
+│   └── dirvish-cronjob
+├── docs
+│   ├── Nagios -  Cluster and Host Monitoring Configurarion
+│   └── Nagios Core 4 Installation on Centos 7.txt
+├── installchecks.sh
+├── installcronjobs.sh
+├── installnrds.sh
+├── nagios-plugins
+│   └── check_*
+├── nrds
+│   ├── client-configs
+│   │   ├── backup
+│   │   │   └── nrds.cfg
+│   │   ├── basic
+│   │   │   └── nrds.cfg
+│   │   ├── controller
+│   │   │   └── nrds.cfg
+│   │   ├── login
+│   │   │   └── nrds.cfg
+│   │   ├── masters
+│   │   │   └── nrds.cfg
+│   │   ├── mds
+│   │   │   └── nrds.cfg
+│   │   ├── nfs
+│   │   │   └── nrds.cfg
+│   │   ├── nodes
+│   │   │   └── nrds.cfg
+│   │   ├── nodes-with-raid
+│   │   │   └── nrds.cfg
+│   │   ├── oss
+│   │   │   └── nrds.cfg
+│   │   └── slurmaster
+│   │       └── nrds.cfg
+│   ├── nrds_common.pl
+│   ├── nrds.pl
+│   └── nrds_updater.pl
+├── README.md
+├── send_nrdp.sh
+├── sv_add-hosts-to-hostgroup.sh
+├── sv_add-host-to-hostgroup.sh
+├── uninstallchecks.sh
+├── uninstallnrds.sh
+└── updatenrds.sh
+
+This is the general structure of a repository. 
+
+Once this has been placed onto a machine, running installnrds.sh will use the hostname of a machine to determine which profile should be installed on to it. Thus not only is the hostname assumed to be set correctly, but also the mapping of hostnames to profiles must also be correct. This is currently hardcoded into the installnrds.sh file using two arrays and a common index.
+
+declare -a nagios_profiles
+declare -a cluster_machines
+alces_nr_profiles=10
+
+nagios_profiles=(
+    'backup'
+    'basic'
+    'controller'
+    'login'
+    'masters'
+    'mds'
+    'nfs'
+    'nodes'
+    'nodes-with-raid'
+    'oss'
+    'slurmaster'
+    )
+
+cluster_machines=(
+    'backup01'  
+    'admin01,admin02,infra01,infra03'
+    'controller'
+    'login1,login2'
+    'master1,master2'
+    'mds1'
+    'nfs1,nfs2'
+    'node,gpu01,phi01,phi02,phi03,phi04'
+    'himem01,himem02,viz01,viz02'
+    'oss1,oss2'
+    'infra02'
+    )
+
+
+   
 1. Add a Cluster to Monitoring
 ------------------------------
 

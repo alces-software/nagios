@@ -1,0 +1,109 @@
+Nagios - Client Deployments version 2?
+--------------------------------------
+
+Q: Is there some kind of overlap/redundancy with:
+    profile determination via hostnames and mappings, and git branching?
+    
+Consider deploying via git branching.
+
+
+Master branch to be generic......is there such a thing as a generic profile? Common case?
+
+
+How to download the correct branch ? Use git clone -b <clustername>  'echo ${HOSTNAME} | grep -o "[[:alpha:]]*$"'
+
+
+We can have the client profiles specific to each cluster in their own branch, and a generic installation script that is customised by parameters ?
+
+.
+├── cl_add-host-to-hostgroup.sh
+├── cronjobs
+│   ├── alces-ipmi-check
+│   ├── check_dirvish
+│   └── dirvish-cronjob
+├── docs
+│   ├── Nagios -  Cluster and Host Monitoring Configurarion
+│   └── Nagios Core 4 Installation on Centos 7.txt
+├── installchecks.sh
+├── installcronjobs.sh
+├── installnrds.sh
+├── nagios-plugins
+│   └── check_*
+├── nrds
+│   ├── client-configs
+│   │   ├── backup
+│   │   │   └── nrds.cfg
+│   │   ├── basic
+│   │   │   └── nrds.cfg
+│   │   ├── controller
+│   │   │   └── nrds.cfg
+│   │   ├── login
+│   │   │   └── nrds.cfg
+│   │   ├── masters
+│   │   │   └── nrds.cfg
+│   │   ├── mds
+│   │   │   └── nrds.cfg
+│   │   ├── nfs
+│   │   │   └── nrds.cfg
+│   │   ├── nodes
+│   │   │   └── nrds.cfg
+│   │   ├── nodes-with-raid
+│   │   │   └── nrds.cfg
+│   │   ├── oss
+│   │   │   └── nrds.cfg
+│   │   └── slurmaster
+│   │       └── nrds.cfg
+│   ├── nrds_common.pl
+│   ├── nrds.pl
+│   └── nrds_updater.pl
+├── README.md
+├── send_nrdp.sh
+├── sv_add-hosts-to-hostgroup.sh
+├── sv_add-host-to-hostgroup.sh
+├── uninstallchecks.sh
+├── uninstallnrds.sh
+└── updatenrds.sh
+
+
+
+What does everyone seem to have ?
+
+laplace
+csf3
+hamilton
+barkla
+
+master branch:
+
+controller
+nodes (but not the same)
+masters
+basic
+login
+slurmaster
+
+barkla branch
+
+backup
+nodes (specific to barkla), an override
+oss
+mfs
+nfs
+nodes-with-raid
+
+Restructuring....
+
+
+The branches can be used only for the configurations, everything else can be used for master ? (How about cronjobs) ?
+
+What about a generic install script with paremeters?
+
+Installscript will...
+
+Grab the name of the cluster, pull down the required branch and install the scripts.
+
+1) Make sure the current branches are correct.(smallest change)
+2) Create any missing branches and ensure they are correct. (another small change)
+3) Modify the master and take care of consequences in the branches. (another small change)
+
+No dependencies detected in this list, order irrelevant. (check retrospectively).
