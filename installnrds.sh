@@ -57,7 +57,7 @@ cluster_machines=(
     'backup01'  
     'admin01,admin02,infra01,infra03'
     'controller'
-    'login1,login2'
+    'login1,login2,vlogin01'
     'master1,master2'
     'mds1'
     'nfs1,nfs2'
