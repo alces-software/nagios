@@ -28,7 +28,7 @@ short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
 #Nodes are an exception for this sort of thing. But an easy one at that.
 
-if [ `echo "${short_hostname}" | grep -ci "node"` -eq "1" ]; then
+if [ `echo "${short_hostname}" | egrep -ci "node\|hnode"` -eq "1" ]; then
         short_hostname="node"
 fi
 
@@ -57,11 +57,11 @@ cluster_machines=(
     'backup01'  
     'admin01,admin02,infra01,infra03'
     'controller'
-    'login1,login2,vlogin01'
-    'master1,master2'
+    'login1,login2,vlogin01,hservice2'
+    'master1,master2,hmaster1,hmaster2,hhablock1-1,hhablock1-2,hhablock2-1,hhablock2-2'
     'mds1'
     'nfs1,nfs2'
-    'node,gpu01,phi01,phi02,phi03,phi04'
+    'node,gpu01,phi01,phi02,phi03,phi04,hnode132'
     'himem01,himem02,viz01,viz02'
     'oss1,oss2'
     'infra02'
