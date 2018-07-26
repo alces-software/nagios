@@ -39,7 +39,7 @@ fi
 echo "nagioscheckhost: ${nagioscheckhost}"
 echo "interval: ${interval}"
 
-bash ${nrds_installer_dir}/installnrds.sh ${nagioscheckhost} ${interval}
+bash ${nrds_installer_dir}/installnrds.sh ${nagiocheckhost} ${interval}
 rc=$?
 if [ "${rc}" -ne "0" ]; then
     echo "Error! Something went wrong with the installation!"
