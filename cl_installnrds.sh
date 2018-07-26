@@ -36,7 +36,7 @@ if [ ! -f ${nrds_installer_dir}/installnrds.sh ]; then
     exit 1
 fi
 
-${nrds_installer_dir}/installnrds.sh ${nagiocheckhost} ${interval}
+bash ${nrds_installer_dir}/installnrds.sh ${nagiocheckhost} ${interval}
 rc=$?
 if [ "${rc}" -ne "0" ]; then
     echo "Error! Something went wrong with the installation!"
@@ -44,7 +44,7 @@ if [ "${rc}" -ne "0" ]; then
 fi
 
 # Run the plugins installer
-source ${nrds_installer_dir}/installchecks.sh
+bash ${nrds_installer_dir}/installchecks.sh
 rc=$?
 if [ ${rc} -ne 0 ]; then
         echo "Error! Could not install nrds plugins!"
