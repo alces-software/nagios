@@ -29,7 +29,7 @@ short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 #Nodes are an exception for this sort of thing. But an easy one at that.
 
 if [ `echo "${short_hostname}" | grep -ci "node"` -eq "1" ]; then
-	short_hostname="node"
+        short_hostname="node"
 fi
 
 # Here, the install script determines which config to install based on the short hostname of the machine
@@ -57,7 +57,7 @@ cluster_machines=(
     'backup01'  
     'admin01,admin02,infra01,infra03'
     'controller'
-    'login1,login2'
+    'login1,login2,vlogin01'
     'master1,master2'
     'mds1'
     'nfs1,nfs2'
@@ -79,7 +79,7 @@ done
 
 # Check for config file
 
-config_file="nagios-${nagios_profile}/nrds/client-configs/${nagios_profile}/nrds.cfg"
+config_file="nagios/nrds/client-configs/${nagios_profile}/nrds.cfg"
 
 if [ ! -f ${config_file} ];
 then
