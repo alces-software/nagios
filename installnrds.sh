@@ -79,7 +79,7 @@ done
 
 # Check for config file
 
-config_file="nagios-${nagios_profile}/nrds/client-configs/${nagios_profile}/nrds.cfg"
+config_file="nagios/nrds/client-configs/${nagios_profile}/nrds.cfg"
 
 if [ ! -f ${config_file} ];
 then
