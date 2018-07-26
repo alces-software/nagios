@@ -58,7 +58,7 @@ cluster_machines=(
     'admin01,admin02,infra01,infra03'
     'controller'
     'login1,login2,vlogin01,hservice2'
-    'master1,master2,hmaster1,hmaster2,hhablock1-1,hhablock1-2,hhablock2-1,hhablock2-2'
+    'master1,master2,hmaster1,hmaster2,hhablock1-1,hhablock1-2,hhablock2-1,hhablock2-2,hmeta1,hmeta2'
     'mds1'
     'nfs1,nfs2'
     'node,gpu01,phi01,phi02,phi03,phi04,hnode132'
