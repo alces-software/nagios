@@ -1,7 +1,5 @@
 #!/bin/bash
 
-printf "Installing NRDS\n"
-
 # This script required root privileges to work correctly.
 
 if [ ${UID} -ne 0 ];
@@ -26,62 +24,12 @@ fi
 host=${1}
 interval=${2}
 
-# Checking for dependencies:
-# Perl, wget, curl
-
-printf "Checking for Perl...\n"
-which perl
-rc=$?
-if [ ${rc} -ne 0 ];
-then
-    yum -y install perl
-    rc=$?
-    if [ ${rc} -ne 0 ];
-    then
-        "Error! Failed to install perl! Aborting...\n"
-        exit ${rc}
-    else
-        "Success! Perl installed.\n"
-    fi
-fi
-
-printf "Checking for wget...\n"
-which wget
-rc=$?
-if [ ${rc} -ne 0 ];
-then
-    yum -y install wget
-    rc=$?
-    if [ ${rc} -ne 0 ];
-    then
-        printf "Error! Failed to install wget\n"
-        exit ${rc}
-    else
-        printf "Success! wget installed\n"
-    fi
-fi
-
-printf "Checking for curl...\n"
-which curl
-rc=$?
-if [ ${rc} -ne 0 ];
-then
-    yum -y install curl
-    rc=$?
-    if [ ${rc} -ne 0 ];
-    then
-        printf "Error! Failed to install curl! Aborting!\n"
-        exit ${rc}
-    fi
-    printf "Success! curl installed.\n"
-fi
-
 short_hostname=`echo ${HOSTNAME} | grep -o "^[A-Za-z0-9]*"`
 
 #Nodes are an exception for this sort of thing. But an easy one at that.
 
 if [ `echo "${short_hostname}" | grep -ci "node"` -eq "1" ]; then
-	short_hostname="node"
+        short_hostname="node"
 fi
 
 # Here, the install script determines which config to install based on the short hostname of the machine
@@ -109,7 +57,7 @@ cluster_machines=(
     'backup01'  
     'admin01,admin02,infra01,infra03'
     'controller'
-    'login1,login2'
+    'login1,login2,vlogin01'
     'master1,master2'
     'mds1'
     'nfs1,nfs2'
@@ -119,22 +67,19 @@ cluster_machines=(
     'infra02'
     )
 
-counter=0
-while [ ${counter} -le "${alces_nr_profiles}" ]; do
-    if [ `echo "${cluster_machines[counter]}" | egrep -ci "${short_hostname}"` -eq "1" ]; then
-        nagios_profile="${nagios_profiles[counter]}"
+profile_counter=0
+while [ ${profile_counter} -le "${alces_nr_profiles}" ]; do
+    if [ `echo "${cluster_machines[profile_counter]}" | egrep -ci "${short_hostname}"` -eq "1" ]; then
+        nagios_profile="${nagios_profiles[profile_counter]}"
         break
     else
-        ((counter++))
+        ((profile_counter++))
     fi
 done
-echo "Counter is: ${counter}"
-echo "Nagios profile: ${nagios_profile}"
-
 
 # Check for config file
 
-config_file="nagios-barkla/nrds/client-configs/${nagios_profile}/nrds.cfg"
+config_file="nagios/nrds/client-configs/${nagios_profile}/nrds.cfg"
 
 if [ ! -f ${config_file} ];
 then
@@ -188,8 +133,9 @@ else
 fi
 
 # Copy files from this directory into the install directory
+nrds_installer_dir="nagios"
 
-cp nagios-barkla/send_nrdp.sh ${installdir}
+cp ${nrds_installer_dir}/send_nrdp.sh ${installdir}
 rc=$?
 if [ ${rc} -ne 0 ];
 then
@@ -205,7 +151,7 @@ else
 fi
 
 # Copy PERL scripts into ${installdir}/nrds directory
-cp nagios-barkla/nrds/*.pl ${installdir}/nrds
+cp ${nrds_installer_dir}/nrds/*.pl ${installdir}/nrds
 if [ $? -ne 0 ];
 then
     printf "Error! Unable to copy perl scripts!\n"
@@ -214,7 +160,7 @@ else
 fi
 
 # Copy the appropriate config in to the install directory.
-cp nagios-barkla/nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
+cp ${nrds_installer_dir}/nrds/client-configs/${nagios_profile}/nrds.cfg ${installdir}/nrds/nrds.cfg
 if [ $? -ne 0 ] ;
 then
     printf "Error! Unable to copy the correct config in to: ${installdir}/nrds\n"
