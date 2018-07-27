@@ -1,0 +1,7 @@
+Each machine that needs to run commands under the nagios user with sudo privileges needs it's /etc/sudoers changed.
+
+Add the following entries:
+
+Cmnd_Alias MONITOR = /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo *, /usr/sbin/crm_mon -s, /usr/sbin/multipath -ll, /usr/bin/ipmitool sensor, /usr/bin/SMcli -d -v, /usr/bin/ipmitool sel elist
+
+nagios ALL=(ALL)        NOPASSWD: MONITOR
