@@ -39,6 +39,8 @@ Host Group objects are used to represent clusters in Nagios.
 
 1. Log in as root, to flightcenter-nagios2
 
+    # ssh root@nagios2
+
 2. Create a directory to store the object definitions specific to a cluster.
 
     # mkdir /usr/local/nagios/etc/objects/<cluster>
@@ -47,21 +49,17 @@ Host Group objects are used to represent clusters in Nagios.
 
     # chown -R nagios:nagios /usr/local/nagios/etc/objects/<cluster>
 
-4. Create a new config file named <cluster>-hostgroup.cfg
+4. Create a new config file, by copying from the generic templates.
 
-    # cd /usr/local/nagios/etc/objects/<cluster>
-    # vi <cluster>-hostgroup.cfg
+    # cp /usr/local/nagios/etc/objects/<cluster>
 
-5. Paste the following hostgroup object definition into the file:
+5. Update the information in the new file to reflect the cluster that this hostgroup definition represents:
 
-
-define hostgroup{
-        hostgroup_name  <cluster> ; The name of the hostgroup/group
-        alias           <cluster> Hostgroup ; Long name of the group
-        members         controller.pri.<clustername>  ; Each cluster has a controller member, so feel free to paste this in.
-}
-
-Save and close.
+    # sed -i 's/CLUSTER/<cluster>/g' /usr/local/nagios/etc/objects/<cluster>/<cluster>-hostgroup.cfg
+    
+You now have:
+    Nagios directory which will contain all Nagios related configurations for this cluster.
+    A hostgroup object defined for your new cluster.
 
 1.2. Create a Host Object Definition for the Controller
 -------------------------------------------------------
@@ -73,21 +71,22 @@ The controller will be the initial member of the host group.
     # mkdir /usr/local/nagios/etc/objects/<cluster>/hosts
     # cd /usr/local/nagios/etc/objects/<cluster>/hosts
     
-2. Create a file named: controller.pri.<cluster>.cfg:
+2. Create a file named: controller.pri.<cluster>.cfg by copying the template file.
 
-    # vi controller.pri.<cluster>.cfg
+    # cp /usr/local/nagios/etc/objects/generic-cluster/hosts/controller.pri.CLUSTER.cfg /usr/local/nagios/etc/objects/<cluster>/hosts/controller.pri.<cluster>.cfg
 
-3. Paste the following host object definition into the file:
+3. Update the information in the new file to reflect the controller that this host definition represents:
 
-define host {
-    use            passive_host
-    host_name      controller.pri.<cluster>
-}
-
+    # sed -i 's/CLUSTER/<cluster>/g' /usr/local/nagios/etc/objects/<cluster>/hosts/controller.pri.<cluster>.cfg
+    
 Save and close.
 
-1.3 Update Nagios Service Configuration
----------------------------------------
+You now have a file that stores host and service definitions for the controller of the cluster.
+
+1.3 Update Nagios Configuration
+-------------------------------
+
+The main nagios.cfg file needs now must be updated.
 
 1. Open the main Nagios config file:
 
@@ -117,25 +116,40 @@ The next stage is to install the NRDP client on to the controller, so that passi
 1.4. Install NRDS Clients on Machines to be Monitored
 -----------------------------------------------------
 
-1. If not already installed, install wget:
+1. If not done already, create a new github branch for the cluster.
 
-    # yum -y install wget
+    # git checkout -b <cluster>
+
+
+2. Navigate to nagios/nrds/client-configs/<profile> check the contents of the nrdp.cfg file to verify the configuration is appropriate. Change if necessary.
+
+2.1. Adding a new profile:
+
+    # mkdir nagios/nrds/client-configs/<profile>
+
+    Then add the nrdp file and add to git:
+
+    # git add nrds/client-configs/<profile>
     
-2. Download NRDP Client Installation files:
+2.2. Editing an existing profile:
 
-    # wget https://github.com/alces-software/nagios/archive/master.tar.gz
+    Open the nrds.cfg in the appropriate directory
     
-3. Extract the tarball:
-
-    # tar xvzf master.tar.gz
+    # vi nrds/clients-config/<profile>/nrds.cfg
     
-4. Install the nrds client 
-
-Run the following command:
-
-    # cd nagios-master
+    Then add nrds/clients-config/<profile>/nrds.cfg
     
-    # ./installnrds.sh <hostname> <interval>
+    # git add nrds/client-configs/<profile>/nrds.cfg
+    
+3. Commit and Push the changes to git:
+
+    # git commit -m "Initial Cluster"
+    
+    # git push origin <cluster>
+    
+4. Login to the target machine and download the "bootstapping script" to launch the install process:
+
+    # 
     
 ----------------------------------------------------------------------------------------------------------------------
 Example: Install NRDS clients onto the LAPLACE cluster CONTROLLER, with checks that will be run at 3 minute intervals:
