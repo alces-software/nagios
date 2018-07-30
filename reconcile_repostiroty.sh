@@ -7,7 +7,7 @@
 latest_file=$1
 
 if [ -z "${1}" ]; then
-	echo "Error! Usage: ${0} <file_to reconcile accross repos branches>"
+	echo "Error! Usage: ${0} <file_to reconcile accross repos branches>
 	exit 1
 fi
 
