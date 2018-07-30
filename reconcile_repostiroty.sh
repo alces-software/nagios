@@ -40,13 +40,17 @@ for branch in `git branch`; do
 	if [ "${branch}" == "*" ] || [ "${branch}" == "${source_branch}" ]; then
 		continue
 	fi
-
+        
 	cp -p /tmp/nagios/"${latest_file}" "${latest_file}"
+
+	git checkout ${branch}
 	git add ${latest_file}
-	git commit -m "Updated ${latest_file} on ${source_branch}"
-        git push origin ${source_branch}
+	git commit -m "Updated ${latest_file} on ${branch}"
+        git push origin ${branch}
 done
 
+# go back to the source_branch
+git checkout ${source_branch}
 # Restore globbing.
 set +f
 
