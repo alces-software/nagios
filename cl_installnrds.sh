@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 nagioscheckhost=`hostname -f | sed -e s/.alces.network$//g`
 interval=3
 
