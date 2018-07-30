@@ -44,7 +44,7 @@ for branch in `git branch`; do
 	cp -p /tmp/nagios/"${latest_file}" "${latest_file}"
 
 	git checkout ${branch}
-	git add ${latest_file}
+	git add '*' 
 	git commit -m "Updated ${latest_file} on ${branch}"
         git push origin ${branch}
 done
