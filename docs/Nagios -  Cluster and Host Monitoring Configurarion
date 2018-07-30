@@ -37,7 +37,9 @@ In this section, a new 'Host Group' is created and assigned a Controller as its 
 
 Host Group objects are used to represent clusters in Nagios.
 
-1. Log in as root, to flightcenter-nagios2
+1. Log in as root, to flightcenter-nagios2:
+
+    # ssh root@nagios2
 
 2. Create a directory to store the object definitions specific to a cluster.
 
@@ -47,19 +49,9 @@ Host Group objects are used to represent clusters in Nagios.
 
     # chown -R nagios:nagios /usr/local/nagios/etc/objects/<cluster>
 
-4. Create a new config file named <cluster>-hostgroup.cfg
+4. Create a new hostgroup config file file by copying the generic hostgroup template:
 
-    # cd /usr/local/nagios/etc/objects/<cluster>
-    # vi <cluster>-hostgroup.cfg
-
-5. Paste the following hostgroup object definition into the file:
-
-
-define hostgroup{
-        hostgroup_name  <cluster> ; The name of the hostgroup/group
-        alias           <cluster> Hostgroup ; Long name of the group
-        members         controller.pri.<clustername>  ; Each cluster has a controller member, so feel free to paste this in.
-}
+    # cp /usr/local/nagios/etc/objects/generic-cluster/
 
 Save and close.
 
