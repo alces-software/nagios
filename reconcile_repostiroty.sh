@@ -16,6 +16,12 @@ if [ ! -f ${latest_file} ]; then
 	exit 1
 fi
 
+if [ ! -d /tmp/nagios ]; then
+	echo "/tmp/nagios does not exist!"
+	exit 1
+	mkdir /tmp/nagios
+fi
+
 # Make a copy of the latest file outside this repo
 cp -p "${latest_file}" /tmp/nagios/"${latest_file}"
 
@@ -29,6 +35,17 @@ echo "Updating ${source_branch} with ${latest_file}"
 git add ${latest_file}
 git commit -m "Updated ${latest_file} on ${source_branch}"
 git push origin ${source_branch}
+
+for branch in `git branch`; do
+	if [ "${branch}" == "*" ] || [ "${branch}" == "${source_branch}" ]; then
+		continue
+	fi
+
+	cp -p /tmp/nagios/"${latest_file}" "${latest_file}"
+	git add ${latest_file}
+	git commit -m "Updated ${latest_file} on ${source_branch}"
+        git push origin ${source_branch}
+done
 
 # Restore globbing.
 set +f
