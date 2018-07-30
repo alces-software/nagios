@@ -22,25 +22,13 @@ cp -p "${latest_file}" /tmp/nagios/"${latest_file}"
 # Globbing needs to be disabled, to handle the * asterisk character as input and format the inputput appropriately.
 set -f
 
-for branch in `git branch`;  do
-	if [ "${branch}" == "*" ]; then
-		continue;
-	fi
-	echo "Updating ${branch} with ${latest_file}"
 
-	# checkout to this branch
-	git checkout "${branch}"
+source_branch=`git branch | grep '*' | sed -e 's/*//'`
+echo "Updating ${source_branch} with ${latest_file}"
 
-	# Now overwrite our outdated file with the latest.
-	cp -p /tmp/nagios/"${latest_file}" "${latest_file}"
-
-	git add "${latest_file}"
-
-	git commit -m "Updated ${branch} with ${latest_file}"
-
-	git push origin "${branch}"
-done
-
+git add ${latest_file}
+git commit -m "Updated ${latest_file} on ${source_branch}"
+git push origin ${source_branch}
 
 # Restore globbing.
 set +f
