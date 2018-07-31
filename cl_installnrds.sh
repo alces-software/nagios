@@ -7,7 +7,7 @@ interval=3
 echo "Installing Nagios NRDS Client on ${nagioscheckhost}"
 
 # download the latest package
-git_nagios_repo_url="http://github.com/alces-software/nagios.git"
+git_nagios_repo_url="https://github.com/alces-software/nagios.git"
 
 # clone the correct branch
 
