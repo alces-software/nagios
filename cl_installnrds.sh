@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export HTTPS_PROXY=http://10.78.0.10:3128; export HTTP_PROXY=$HTTPS_PROXY
 
 nagioscheckhost=`hostname -f | sed -e s/.alces.network$//g`
 interval=3
