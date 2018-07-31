@@ -177,10 +177,63 @@ pdsh -w node[917-921] 'curl https://raw.githubusercontent.com/alces-software/nag
 1. Obtain a list of the hosts to be added for monitoring. You can do this by logging in to the controller of the cluster that has hosts to be monitored.
 Then, run the command:
 
-    # nodeattr -n <group> 
+    # nodeattr -n <gender>
     
-<group> represents the class of hosts to be added, e.g. Compute, Storage, all (for the set of all classes of hosts).
+Example: Obtaining a list of nodes and adding two nodes at once to Nagios Server Configuration
 
+[root@controller [nextgen2] ~]# nodeattr -n all
+admin01
+admin02
+infra01
+infra02
+login1
+login2
+master1
+node01
+.
+.
+.
+
+Two nodes to be added: admin01 and admin02:, 
+
+2. Copy the names of the nodes to be added to a new file on the Nagios Server:
+
+    # cd /usr/local/nagios/etc/objects
+    
+    # vi newhosts.txt
+    
+    Paste the nodes in to the newhosts.txt file, then save and close the file.
+    
+3. Run the following script:
+
+    # ./sv_add-hosts-to-hostgroup.sh <name of file> <cluster>
+    
+    The existence of the config files which contain host definitions for these hosts can be verified by navigating to:
+    
+    # cd /usr/local/nagios/etc/objects/<cluster>/hosts
+    # ls -l
+    
+    See that the new files are present. 
+    
+4. Run a syntax check on the Nagios config file:
+
+    # /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+    
+5. Restart nagios:
+
+    # systemctl restart nagios && tail -f /usr/local/nagios/var/nagios.log
+
+
+2.2 Adding Multiple Hosts to a Cluster - Client Side Configuration
+-------------------------------------------------------------------
+
+1. Log in to controller of the cluster, that the new host to be monitored is a member of:
+
+2. Run the following command:
+
+pdsh <command to add multiple hosts> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash'
+
+Example: Add the two hosts: 'admin01' and 'admin02' on the nextgen2 cluster
 
 
 
@@ -374,7 +427,6 @@ If the service is resumed, the status will transition immediately to HARD OK.
 </WIP>
 
 
-
 Error Message: /usr/local/nagios/libexec/check_inlettemp: line 34: cd: /var/spool/nagios/ipmi-check: No such file or directory
 -------------------------------------------------------------------------------------------------------------------------------
 
@@ -386,4 +438,7 @@ What user does it run under ?
 Controller's need:
 
 /var/spool/nagios/ipmi-check and /var/spool/nagios/ecc-check
+
+
+
 
