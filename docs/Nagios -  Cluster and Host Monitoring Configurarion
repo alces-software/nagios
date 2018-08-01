@@ -9,14 +9,18 @@ Nagios - Cluster and Host Monitoring Configuration
 Contents
 --------
 
+0. New Cluster Configuration...............................................................................................................
+0.1. Clone the Nagios Repository...........................................................................................................
+0.2. Create a New branch and Customse Configuration........................................................................................
+0.3. Issuing a New Token...................................................................................................................
 1. Add a Cluster to Monitoring.............................................................................................................
 1.1. Create a New Host Group Object Definition.............................................................................................
 1.2. Create a New Host Object Definition...................................................................................................
 1.3. Update Nagios Service Main Configuration..............................................................................................
 1.4. Install NRDS Clients on Machines to be Monitored......................................................................................
-2. Adding a Host to Monitoring..........................................................................................................
-2.1. Adding a Host to Monitoring - Server Side Configuration.............................................................................
-2.2. Adding a Host to Monitoring - Client Side Configuration.............................................................................
+2. Adding a Host to Monitoring.............................................................................................................
+2.1. Adding a Host to Monitoring - Server Side Configuration...............................................................................
+2.2. Adding a Host to Monitoring - Client Side Configuration...............................................................................
 3. Adding Service Checks to Hosts..........................................................................................................
 3.1. Adding Service Checks to Hosts - Server Side Configuration............................................................................
 3.2. Adding Service Checks to Hosts - Client Side Configuration............................................................................
@@ -31,6 +35,59 @@ laplace or hamilton.
 
 Generally, configuration must be performed on client and server. Server configuration, is used by Nagios to process and display information it receives from clients correctly. Client configuration, species what checks to run and where to transfer the data.
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+0 New Cluster Configuration.
+----------------------------
+
+0.3. Issuing a new Token
+------------------------
+
+On the Nagios Server, open the NRDP server configuration file:
+
+    # vi /usr/local/nrdp/server.config.inc.php
+    
+In add a new token to the authorized_tokens array. Make sure the previous token has is enclosed by "" (double quotes) and has a , (comma) delimiting tokens. Make sure there is no , (comma) after the double quote closing <NEW TOKEN>
+
+$cfg['authorized_tokens'] = array(
+    //"mysecrettoken",  // <-- not a good token
+    //"90dfs7jwn3",   // <-- a better token (don't use this exact one, make your own)
+    "90t3s7t0k3n90",
+    "9Zp123hcb3Hd1",
+    "<NEW TOKEN>"
+);
+
+
+0.1. Clone the Nagios Repository
+---------------------------------
+
+Each cluster's configuration files are maintained in a dedicated branch of the nagios repository. 
+
+    # git clone <url>
+
+0.2 Create a New branch and Customse Configuration
+--------------------------------------------------
+
+1. Once in the alces-software Nagios Github repository, create a new branch.
+
+    # git checkout -b <cluster>
+    
+2. Update Monitoring configurations for each cluster profile.
+
+First, ensure that the nrds.cfg file in each profile is updated with the new token that was added in section 0.1 above.
+
+This monitoring configurations depend on which checks are required on each machine. The directory nrds/client-configs contains a set of directories, that each refer to a type of configuration profile.
+enter this directory and customise it's containing nrds.cfg file to apply the necessary checks for the new cluster.
+
+0.4. Update the new branch.
+--------------------------
+    # git add *
+    # git commit -m "First configuration for <cluster>"
+    # git push origin <cluster>
+    
+The configurations are now in place for the new cluster. 
+
+
 
 1. Add a Cluster to Monitoring
 ------------------------------
@@ -168,9 +225,6 @@ Example: Remotely executing the install script on a cluster member (the slurmast
 [root@controller [nextgen2] ~]# pdsh -w infra02 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash'
 ****************************************************************************************************************************************************
 
-pdsh -w node[917-921] 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash
-
-
 2.3. Adding Multiple Hosts to a Cluster - Client Side Configuration
 -------------------------------------------------------------------
 
@@ -225,7 +279,7 @@ Two nodes to be added: admin01 and admin02:,
 
 
 2.2 Adding Multiple Hosts to a Cluster - Client Side Configuration
--------------------------------------------------------------------
+------------------------------------------------------------------
 
 1. Log in to controller of the cluster, that the new host to be monitored is a member of:
 
@@ -233,8 +287,13 @@ Two nodes to be added: admin01 and admin02:,
 
 pdsh <command to add multiple hosts> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash'
 
-Example: Add the two hosts: 'admin01' and 'admin02' on the nextgen2 cluster
+****************************************************************************************************************************************************
+Example: Add the two hosts: 'admin01' and 'admin02' to a cluster:
+****************************************************************************************************************************************************
+pdsh -w admin01,admin02 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash
+****************************************************************************************************************************************************
 
+The client side installation is now complete.
 
 
 4. Adding Hardware Service Checks to Hosts
@@ -242,12 +301,28 @@ Example: Add the two hosts: 'admin01' and 'admin02' on the nextgen2 cluster
 
 
 4.1. Install and Configure Hardware Check dependencies - Client Side Configuration
------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------
 
 Hardware checks work the same as software checks, however they have dependencies on third party applications that obtain information about the hardware.
+For these to be run by the nagios user requies the nagios user to have its privileges elevated. This is done in a limited way as follows:
 
-ipmi-tool
----------
+Privilege Escalation for Nagios User
+------------------------------------
+
+1. Grant permission for Nagios to run commands as sudo.
+
+    # visudo
+
+2. Add the following to the Command Aliases section, labelled: ## Command Aliases
+
+    Cmnd_Alias MONITOR = /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo *, /usr/sbin/crm_mon -s, /usr/sbin/multipath -ll, /usr/bin/ipmitool sensor, /usr/bin/SMcli -d -v, /usr/bin/ipmitool sel elist
+
+3. Append the following line to the (bottom) the file, just beneath, #includedir /etc/sudoers.d:
+
+    nagios    ALL=(ALL)       NOPASSWD: MONITOR
+
+Installing ipmi-tool
+--------------------
 
 The ipmi-tool is used to query nodes for various hardware properties. Currently we use this to monitor CPU core temperature and ECC memory information.
 
@@ -257,7 +332,6 @@ The ipmi-tool is used to query nodes for various hardware properties. Currently 
 You can query the local machines yum database, to see whether the package is already installed:
 
     # yum info freeipmi
-    
     
 Installed Packages
 Name        : freeipmi
@@ -302,11 +376,15 @@ Add the two lines:
 4.2.4. Add the script to retrieve IPMI sensor output
 ----------------------------------------------------
 
-Place the script named: alces-impi-check into the /etc/cron.hourly. This script runs with root permissions. The directories it creates are owned by nagios, however the files that are written to them via the ipmi tools (sensors and sel), are owned by root. Nagios does have read permissions, so this should pose no problems in terms of accessing the data for passive checks.
+This script will be run on CONTROLLER machines.
 
-# cd /etc/cron.hourly
+Place the script named: alces-ipmi-check into the /etc/cron.hourly. This script runs with root permissions. The directories it creates are owned by nagios, however the files that are written to them via the ipmi tools (sensors and sel), are owned by root. Nagios does have read permissions, so this should pose no problems in terms of accessing the data for passive checks.
 
-This script should be present on the CONTROLLER:
+    # cd /etc/cron.hourly
+
+    # vi alces-ipmi-check
+
+Paste the following:
 
 #!/bin/bash
 # script to retrieve IPMI sensors output
@@ -327,8 +405,7 @@ do
 
 done
 
-# remove files for login nodes
-rm -f /var/spool/nagios/ecc-check/login* /var/spool/nagios/ipmi-check/login*
+Now save and close.
 
 4.2.2 Verify The Script Runs Correctly
 --------------------------------------
@@ -344,9 +421,7 @@ Storage Checks
 
 Before running the Nagios check under cron, find the commands that are dependencies and ensure they run OK.
 
-Example:
-
-We want to Check the System Disk (Check systemdisk) on master1.pri.laplace.
+Example: Checking the System Disk (Check systemdisk) on master1.pri.laplace.
 
 1. Open the config file /usr/local/nrdp/clients/nrds/nrds.cfg
 
@@ -363,25 +438,22 @@ sudo /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo -l $vol -A $card
     # /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo -l 0 -A 0 | grep -i "State"
     
     We should see state as Optimal.
-    
-Note that this command also uses sudo. To use sudo, the nagios user will need to be given permission to do so.
-
-3. Grant permission for Nagios to run commands as sudo.
-
-    # visudo
-
-Add the following to the Command Aliases section, labelled: ## Command Aliases
-
-    Cmnd_Alias MONITOR = /opt/MegaRAID/MegaCli/MegaCli64 -ldinfo *, /usr/sbin/crm_mon -s, /usr/sbin/multipath -ll, /usr/bin/ipmitool sensor, /usr/bin/SMcli -d -v, /usr/bin/ipmitool sel elist
-
-Then append the following to the (bottom) of the file:
-
-    nagios    ALL=(ALL)       NOPASSWD: MONITOR
 
 Save and close the file.
 
+Installing MegaCli
+------------------
+
+1. Install MegaCli via yum:
+
+    # yum install megacli
+    
+Nothing else is required, as the Nagios Check Scripts will 
+
 PSU Checks
 ----------
+
+To be added.
 
 5. Troubleshooting
 ------------------
@@ -414,9 +486,7 @@ Options:
         -S    State
         -o     output
 
-
-./send_nrdp.sh -u http://10.78.0.30/nrdp -t RrpjfuGiOOb5 -H controller.pri.csf3 -s "Check Load" -S1 -o "Premigration test!"
-./send_nrdp.sh -u http://10.78.0.31/nrdp -t 90t3s7t0k3n90 -H controller.pri.csf3 -s "Check Load" -S1 -o "Premigration test!
+./send_nrdp.sh -u https://10.78.0.31/nrdp -t 90t3s7t0k3n90 -H controller.pri.csf3 -s "Check Load" -S1 -o "Premigration test!
 
 This will force the Check Load service monitor in to a HARD WARNING state. Recovery (OK), will lead it back in to a HARD OK state.
 
@@ -424,21 +494,9 @@ This will force the Check Load service monitor in to a HARD WARNING state. Recov
 
 If the service is resumed, the status will transition immediately to HARD OK.
 
-</WIP>
-
-
-Error Message: /usr/local/nagios/libexec/check_inlettemp: line 34: cd: /var/spool/nagios/ipmi-check: No such file or directory
--------------------------------------------------------------------------------------------------------------------------------
-
-This requires installation of alces-ipmi-tool.
-
-Where is the alces-ipmi-tool located ?
-What user does it run under ?
-
-Controller's need:
-
-/var/spool/nagios/ipmi-check and /var/spool/nagios/ecc-check
-
+Updating a Token
+----------------
+./send_nrdp.sh -u https://10.78.0.31/nrdp -t <new token> -H controller.pri.laplace -s "Check Host" -S0 -o "Token change test"
 
 
 
