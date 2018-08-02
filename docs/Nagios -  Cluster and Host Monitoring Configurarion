@@ -52,8 +52,8 @@ In add a new token to the authorized_tokens array. Make sure the previous token 
 $cfg['authorized_tokens'] = array(
     //"mysecrettoken",  // <-- not a good token
     //"90dfs7jwn3",   // <-- a better token (don't use this exact one, make your own)
-    "90t3s7t0k3n90",
-    "9Zp123hcb3Hd1",
+    "<TOKEN 1>",
+    "<TOKEN 2>",
     "<NEW TOKEN>"
 );
 
