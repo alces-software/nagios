@@ -1,5 +1,5 @@
 URL="https://10.78.0.31/nrdp/"
-TOKEN="q219xjTJx7v9N"
+TOKEN="90t3s7t0k3n90"
 PLUGIN_DIR="/usr/local/nagios/libexec"
 SEND_NRDP="/usr/local/nrdp/clients/send_nrdp.sh"
 TMPDIR="/usr/local/nrdp/clients/tmp"
