@@ -1,15 +1,20 @@
 #!/bin/bash
 
-thisbranch=`git status | head -1 | grep -o '[[:alnum:]]*$'`
+new_token=$1
 
-#remove the asterisk from the variable before echoing output.
+if [ -z "${1}" ]; then
+        echo "Error! Usage: ${0} <new token>"
+        exit 1
+fi
 
-echo "Updating token on: ${thisbranch}"
+this_branch=`git status | head -1 | grep -o '[[:alnum:]]*$'`
+
+echo "Updating token on: ${this_branch}"
 
 client_config_dir="nrds/client-configs"
 
 for config_profile in `ls -1 ${client_config_dir}`; do
-	sed -e 's/^//' ${client_config_dir}/${config_profile}/nrds.cfg
+    sed -ie 's#\(TOKEN="\)[[:alnum:]]*\("\)#\1'"${new_token}"'\2#g' ${client_config_dir}/${config_profile}/nrds.cfg
 done
 
 exit 0
