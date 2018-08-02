@@ -52,11 +52,10 @@ In add a new token to the authorized_tokens array. Make sure the previous token 
 $cfg['authorized_tokens'] = array(
     //"mysecrettoken",  // <-- not a good token
     //"90dfs7jwn3",   // <-- a better token (don't use this exact one, make your own)
-    "90t3s7t0k3n90",
-    "9Zp123hcb3Hd1",
+    "<TOKEN 1>",
+    "<TOKEN 2>",
     "<NEW TOKEN>"
 );
-
 
 0.1. Clone the Nagios Repository
 ---------------------------------
@@ -79,6 +78,10 @@ First, ensure that the nrds.cfg file in each profile is updated with the new tok
 This monitoring configurations depend on which checks are required on each machine. The directory nrds/client-configs contains a set of directories, that each refer to a type of configuration profile.
 enter this directory and customise it's containing nrds.cfg file to apply the necessary checks for the new cluster.
 
+3. Update the token for the configuration in the branch:
+
+    # ./update_token.sh <NEW TOKEN>
+
 0.4. Update the new branch.
 --------------------------
     # git add *
@@ -86,7 +89,6 @@ enter this directory and customise it's containing nrds.cfg file to apply the ne
     # git push origin <cluster>
     
 The configurations are now in place for the new cluster. 
-
 
 
 1. Add a Cluster to Monitoring
@@ -190,7 +192,9 @@ Preconditions:
 2.1 Adding a Host to Monitoring - Server Side Configuration
 -----------------------------------------------------------
 
-1. Login to flightcenter-nagios2 as root
+1. Login to flightcenter-nagios2 as root and change directory to the Nagios Objects directory:
+
+    #  cd /usr/local/nagios/etc/objects
 
 2. Run the following command:
 
@@ -217,7 +221,7 @@ You will then be able to see the new Host in the UI, under the list of hosts, wi
 
 2. Run the following command:
 
-pdsh -w <short_hostname> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash'
+pdsh -w <short hostname of the target host> 'curl https://raw.githubusercontent.com/alces-software/nagios/master/cl_installnrds.sh | /bin/bash'
 
 ****************************************************************************************************************************************************
 Example: Remotely executing the install script on a cluster member (the slurmaster) via the controller.
@@ -494,9 +498,29 @@ This will force the Check Load service monitor in to a HARD WARNING state. Recov
 
 If the service is resumed, the status will transition immediately to HARD OK.
 
-Updating a Token
-----------------
-./send_nrdp.sh -u https://10.78.0.31/nrdp -t <new token> -H controller.pri.laplace -s "Check Host" -S0 -o "Token change test"
+Updating a Token for a live cluster
+-----------------------------------
+
+Test the token before updating!
+
+Xzp19u2JHGAz1
+
+./send_nrdp.sh -u https://10.78.0.31/nrdp -t Xzp19u2JHGAz1 -H controller.pri.nextgen2 -s "Check Host" -S0 -o "Token change test"
 
 
+./send_nrdp.sh -u https://10.78.0.31/nrdp -t <NEW TOKEN> -H controller.pri.<CLUSTER> -s "Check Host" -S0 -o "Token change test"
+
+1. Login to the controller of the cluster.
+
+2. Run the following command:
+
+    # ./scp_to_group update_tokens.sh <gender>
+
+3. Run the token updater on each node:
+
+    # pdsh -g <gender> '/root/update_tokens.sh <NEW TOKEN>'
+    
+4. Remove the token updater:
+
+    # pdsh -g <gender> 'rm -f /root/update_tokens.sh'
 
