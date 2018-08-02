@@ -58,6 +58,9 @@ $cfg['authorized_tokens'] = array(
 );
 
 
+
+
+
 0.1. Clone the Nagios Repository
 ---------------------------------
 
@@ -494,9 +497,10 @@ This will force the Check Load service monitor in to a HARD WARNING state. Recov
 
 If the service is resumed, the status will transition immediately to HARD OK.
 
-Updating a Token
-----------------
+Updating a Token for an already deployed cluster
+------------------------------------------------
 ./send_nrdp.sh -u https://10.78.0.31/nrdp -t <new token> -H controller.pri.laplace -s "Check Host" -S0 -o "Token change test"
 
+sed -i 's#\(TOKEN="\)[[:alnum:]]*\(\"\)#\19Zp123hcb3Hd1\2#g' /usr/local/nrdp/clients/nrds/nrds.cfg
 
 
