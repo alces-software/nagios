@@ -1,8 +1,0 @@
-URL="https://10.78.0.31/nrdp/"
-TOKEN="90t3s7t0k3n90"
-PLUGIN_DIR="/usr/local/nagios/libexec"
-SEND_NRDP="/usr/local/nrdp/clients/send_nrdp.sh"
-TMPDIR="/usr/local/nrdp/clients/tmp"
-
-command[__HOST__]=/usr/local/nagios/libexec/check_ping -H localhost -w 200.0,40% -c 400.0,80% -p 1
-command[check_ismounted]=/usr/local/nagios/libexec/check_ismounted /users
