@@ -142,6 +142,13 @@ then
     printf "Error! Unable to copy send_nrds.sh into install directory.\n"
 fi
 
+cp ${nrds_installer_dir}/update_check.sh ${installdir}
+rc=$?
+if [ ${rc} -ne 0 ];
+then
+    printf "Error! Unable to copy update_check.sh into install directory.\n"
+fi
+
 mkdir ${installdir}/nrds 
 if [ $? -ne 0 ];
 then
