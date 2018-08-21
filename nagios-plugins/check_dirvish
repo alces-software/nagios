@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# to check or not to check
+checkstatusfile=/var/spool/nagios/dirvish.status
+checkstatus=`grep -i "check_dirvish_status=[0-1]$" ${checkstatusfile} | grep -o "[0-1]"`
+
+if [ ${checkstatus} -eq "0" ]; then
+    # Nothing to do..
+   echo "Nothing to do.."
+   exit 0
+fi
+
 statusfile=/var/spool/nagios/dirvish.out
 
 if [ ! -f $statusfile ] ; then
@@ -12,9 +22,14 @@ exitstatus=`tail -1 $statusfile`
 head -n 1 $statusfile
 
 # We've checked...if things are OK, then set check_status to 0
-if [  ${exitstatus} -eq "0" ]; then
-    sed -ei 's/(check_dirvish_status=)1/\10/' ${checkstatusfile}
-    if [ $? -ne 0 ]
+# We now reset this value to 0. This causes us to exit if this script is run again, unless
+#    check_dirvish_status is nonzero. 
+# Only the dirvish-cronjob, will cause this to happen, indicating that our check_dirvish
+#    tests for dirvish status file once per day
+
+if [  ${checkstatus} -eq "0" ]; then
+    sed -i -e 's/(check_dirvish_status=)1/\10/' ${checkstatusfile}
+    if [ $? -ne 0 ]; then
         exit 1
 fi
 
