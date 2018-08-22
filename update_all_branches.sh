@@ -55,7 +55,7 @@ for branch in `git branch | tr -d \*`; do
   
     # Add the file to this branch: In the first case, we're just overwriting our existing file.
 
-    if [ "${git_op}" == "add"]; then
+    if [ "${git_op}" == "add" ]; then
         
 	cp /tmp/git/${file_to_update} .
         if [ $? -ne 0 ]; then
@@ -78,7 +78,7 @@ for branch in `git branch | tr -d \*`; do
     # Now tell git what needs to be done
 
     git ${git_op} ${file_to_update}
-    if [ $? -ne 0]; then
+    if [ $? -ne 0 ]; then
         echo "Error! Unable to add ${file_to_update} to ${branch}"
 	exit 1
     fi
