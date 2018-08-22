@@ -18,12 +18,12 @@ if [ "$3" != "add" ] && [ "$3" != "rm" ]; then
     exit 1
 fi	
 
-file_to_update="test_file.txt"
+file_to_update=$1
 commit_message=$2
 git_op=$3
 
 if [ ! -f ${file_to_update} ]; then
-    echo "Error! ${file_to_update} non-existant!"
+    echo "Error! ${file_to_update} is non-existant!"
     exit 1
 fi
 
@@ -52,24 +52,30 @@ initial_branch=`git status | head -1 | grep -o "[[:alnum:]]*$"`
 #    by git branch, to specify the current branch
 
 for branch in `git branch | tr -d \*`; do
-   
-    echo "Updating ${file_to_update} on ${branch}"
-    echo "Switching to ${branch}..."
-    
-    git checkout ${branch} 
-    
-    if [ $? -ne 0 ]; then
-        echo "Error! Unable to switch to branch: ${branch}"
-        exit 1
-    fi
-	
-    echo "Now in branch: ${branch}"
+  
+    # Add the file to this branch: In the first case, we're just overwriting our existing file.
 
-    cp /tmp/git/${file_to_update} .
-    if [ $? -ne 0 ]; then
-        echo "Error! Unable to copy ${file_to_update} from /tmp/git to `pwd`"
-	exit 1
+    if [ "${git_op}" == "add"]; then
+        
+	cp /tmp/git/${file_to_update} .
+        if [ $? -ne 0 ]; then
+            echo "Error! Unable to copy ${file_to_update} from /tmp/git to `pwd`"
+            exit 1
+        fi
+
+    # Rm the file from branch
+    
+    elif [ "${git_op}" == "rm" ]; then
+	
+	rm -f ${file_to_update}
+	if [ $? -ne 0 ]; then
+	    echo "Error! Unable to remove ${file_to_update}"
+	    exit 1
+	fi
     fi
+
+
+    # Now tell git what needs to be done
 
     git ${git_op} ${file_to_update}
     if [ $? -ne 0]; then
@@ -89,7 +95,17 @@ for branch in `git branch | tr -d \*`; do
 	exit 1
     fi
 
-    echo "Success! Branch: ${branch} has now been updated."
+    echo "Success! Branch: ${branch} has now been updated, checking out to another branch..."
+
+    git checkout ${branch}
+
+    if [ $? -ne 0 ]; then
+        echo "Error! Unable to switch to branch: ${branch}"
+        exit 1
+    fi
+
+    echo "Now on branch: ${branch}"
+
 done
 
 
