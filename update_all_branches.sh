@@ -121,7 +121,7 @@ fi
 # Return to the branch we were on prior to updating all branches.
 
 git checkout ${initial_branch}
-if [ $? - ne 0 ]; then
+if [ $? -ne 0 ]; then
     echo "Error! Unable to return to ${initial_branch}"
 fi
 
