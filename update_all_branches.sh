@@ -99,7 +99,7 @@ if [ "${git_op}" == "add" ]; then
     if [ $? -ne 0 ]; then
    	echo "Error! Something went wrong during the cleanup operation"
 	exit 1
-fi
+    fi
 fi
 
 # Return to the branch we were on prior to updating all branches.
