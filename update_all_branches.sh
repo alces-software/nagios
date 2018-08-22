@@ -47,7 +47,11 @@ fi
 
 initial_branch=`git status | head -1 | grep -o "[[:alnum:]]*$"`
 
-for branch in `git branch | grep -v \*`; do
+# Iterate through each branch. 
+# Tr is used to remove the * character, that is output
+#    by git branch, to specify the current branch
+
+for branch in `git branch | tr -d \*`; do
    
     echo "Updating ${file_to_update} on ${branch}"
     echo "Switching to ${branch}..."
