@@ -4,7 +4,7 @@
 #     a commit message
 #     whether we want to add or remove a file.
 
-if [ -z $1 ] || [ -z $2 ] || [ -z $3 ]; then
+if [ -z $1 ] || [ -z $2 ]; then
      echo "Error! Usage: $0 <file to update on all branches> <commit message> <[add|rm]>"
      echo "e.g. : $0 new_file.sh file-to-do-something add"
      echo "       $0 old_file.sh file-that-does-something rm"
