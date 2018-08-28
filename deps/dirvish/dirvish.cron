@@ -1,0 +1,4 @@
+# /etc/cron.d/dirvish: crontab fragment for dirvish
+
+# run at 14 minutes past 3 every morning
+14 3 * * *     root      /etc/dirvish/dirvish-cronjob
