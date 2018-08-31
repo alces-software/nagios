@@ -36,7 +36,7 @@ if [ ! -f ${nrds_installer_dir}/installnrds.sh ]; then
     exit 1
 fi
 
-source ${nrds_installer_dir}/installnrds.sh ${nagiocheckhost} ${interval}
+source ${nrds_installer_dir}/installnrds.sh ${nagioscheckhost} ${interval}
 rc=$?
 if [ "${rc}" -ne "0" ]; then
     echo "Error! Something went wrong with the installation!"
