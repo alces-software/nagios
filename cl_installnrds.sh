@@ -1,7 +1,7 @@
 #!/bin/bash
 
 nagioscheckhost=`hostname -f | sed -e s/.alces.network$//g`
-# interval=3
+interval=3
 
 echo "Installing Nagios NRDS Client on ${nagioscheckhost}"
 
